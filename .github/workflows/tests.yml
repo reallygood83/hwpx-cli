@@ -19,6 +19,6 @@ jobs:
           node-version: 20
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @reallygood83/hwpxcore typecheck
-      - run: pnpm --filter @reallygood83/hwpxcore test
-      - run: pnpm --filter @reallygood83/hwpxcore build
+      - run: pnpm --filter @masteroflearning/hwpxcore typecheck
+      - run: pnpm --filter @masteroflearning/hwpxcore test
+      - run: pnpm --filter @masteroflearning/hwpxcore build
