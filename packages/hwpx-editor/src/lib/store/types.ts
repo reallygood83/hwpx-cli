@@ -2,7 +2,7 @@
  * Store type definitions
  */
 
-import type { HwpxDocument } from "@reallygood83/hwpxcore";
+import type { HwpxDocument } from "@masteroflearning/hwpxcore";
 import type { EditorViewModel } from "../view-model";
 import type { CharFormat, ParaFormat } from "../format-bridge";
 import type { AlignmentType, OrientationType, SidebarTab } from "../constants";

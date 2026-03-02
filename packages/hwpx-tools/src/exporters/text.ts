@@ -3,7 +3,7 @@
  * Extracts all text content from HWPX documents.
  */
 
-import { HwpxPackage, TextExtractor, Paragraph } from "@reallygood83/hwpxcore";
+import { HwpxPackage, TextExtractor, Paragraph } from "@masteroflearning/hwpxcore";
 
 export interface TextExportOptions {
   /** Separator between paragraphs (default: "\n") */

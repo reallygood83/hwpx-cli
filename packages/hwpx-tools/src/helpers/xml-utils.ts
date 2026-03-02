@@ -7,7 +7,7 @@ import {
   childElements,
   getAttributes,
   getTextContent,
-} from "@reallygood83/hwpxcore";
+} from "@masteroflearning/hwpxcore";
 
 /**
  * Strip namespace prefix from a tag name.

@@ -6,22 +6,22 @@ This file is a concise, LLM-friendly reference for using this repository.
 
 `hwpx-ts` is a TypeScript monorepo for HWPX document workflows:
 
-- Parse and edit HWPX (`@reallygood83/hwpxcore`)
-- Render/edit in React (`@reallygood83/hwpxeditor`)
-- Expose HWPX tools through MCP (`@reallygood83/hwpx-mcp`)
+- Parse and edit HWPX (`@masteroflearning/hwpxcore`)
+- Render/edit in React (`@masteroflearning/hwpxeditor`)
+- Expose HWPX tools through MCP (`@masteroflearning/hwpx-mcp`)
 
-## Primary Package: @reallygood83/hwpxcore
+## Primary Package: @masteroflearning/hwpxcore
 
 Install:
 
 ```bash
-npm install @reallygood83/hwpxcore
+npm install @masteroflearning/hwpxcore
 ```
 
 Basic import:
 
 ```ts
-import { HwpxDocument, HwpxPackage, TextExtractor } from "@reallygood83/hwpxcore";
+import { HwpxDocument, HwpxPackage, TextExtractor } from "@masteroflearning/hwpxcore";
 ```
 
 ### Core APIs
@@ -103,12 +103,12 @@ pkg.close();
 - XML serialization prefers HWPX prefixes (`hp`, `hs`, `hc`, `hh`).
 - Package fallback warnings can be captured via `HwpxPackage.setWarningHandler(...)`.
 
-## MCP Package: @reallygood83/hwpx-mcp
+## MCP Package: @masteroflearning/hwpx-mcp
 
 Run server:
 
 ```bash
-npx @reallygood83/hwpx-mcp
+npx @masteroflearning/hwpx-mcp
 ```
 
 Available MCP tools:
@@ -126,7 +126,7 @@ Claude Desktop config snippet:
   "mcpServers": {
     "hwpx": {
       "command": "npx",
-      "args": ["@reallygood83/hwpx-mcp"]
+      "args": ["@masteroflearning/hwpx-mcp"]
     }
   }
 }
@@ -142,9 +142,9 @@ Claude Desktop config snippet:
 ## Development Commands (Repo)
 
 ```bash
-pnpm --filter @reallygood83/hwpxcore test
-pnpm --filter @reallygood83/hwpxcore typecheck
-pnpm --filter @reallygood83/hwpxcore build
-pnpm --filter @reallygood83/hwpx-tools test
-pnpm --filter @reallygood83/hwpx-mcp exec vitest run --passWithNoTests
+pnpm --filter @masteroflearning/hwpxcore test
+pnpm --filter @masteroflearning/hwpxcore typecheck
+pnpm --filter @masteroflearning/hwpxcore build
+pnpm --filter @masteroflearning/hwpx-tools test
+pnpm --filter @masteroflearning/hwpx-mcp exec vitest run --passWithNoTests
 ```

@@ -19,10 +19,10 @@
 #### 설치
 ```bash
 # npm (패키지가 배포되어 있다면)
-npm i -g @reallygood83/hwpx-cli
+npm i -g @masteroflearning/hwpx-cli
 
 # pnpm
-pnpm add -g @reallygood83/hwpx-cli
+pnpm add -g @masteroflearning/hwpx-cli
 ```
 
 #### HWP → HWPX

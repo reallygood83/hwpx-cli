@@ -1,5 +1,5 @@
 /**
- * @reallygood83/hwpx-tools
+ * @masteroflearning/hwpx-tools
  *
  * Utility tools for HWPX document conversion and manipulation.
  *
@@ -19,4 +19,4 @@ export * from "./converters/index.js";
 export * from "./indexing.js";
 
 // Re-export commonly used types from hwpx-core for convenience
-export { HwpxPackage, HwpxDocument, TextExtractor } from "@reallygood83/hwpxcore";
+export { HwpxPackage, HwpxDocument, TextExtractor } from "@masteroflearning/hwpxcore";

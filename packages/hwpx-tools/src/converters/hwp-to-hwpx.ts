@@ -12,7 +12,7 @@ import type { HWPDocument, Paragraph as HwpParagraph } from "@hwp.js/parser";
 import { readFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { resolve as pathResolve } from "node:path";
-import { HwpxDocument } from "@reallygood83/hwpxcore";
+import { HwpxDocument } from "@masteroflearning/hwpxcore";
 
 export interface HwpToHwpxOptions {
   /** Insert placeholders for unknown inline objects (default: false). */
@@ -87,7 +87,7 @@ async function loadSkeletonHwpxBytes(): Promise<Uint8Array> {
   // Prefer resolving the installed package asset.
   try {
     const req = createRequire(import.meta.url);
-  const skeletonPath = req.resolve("@reallygood83/hwpxcore/assets/Skeleton.hwpx");
+  const skeletonPath = req.resolve("@masteroflearning/hwpxcore/assets/Skeleton.hwpx");
     const buf = await readFile(skeletonPath);
     _cachedSkeletonBytes = new Uint8Array(buf);
     return _cachedSkeletonBytes;

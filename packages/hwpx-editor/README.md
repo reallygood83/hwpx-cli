@@ -1,19 +1,19 @@
-# @reallygood83/hwpxeditor
+# @masteroflearning/hwpxeditor
 
 한글 워드프로세서 스타일의 UI를 제공하는 React 에디터 컴포넌트 라이브러리입니다.
 
-[![npm version](https://img.shields.io/npm/v/@reallygood83/hwpxeditor.svg)](https://www.npmjs.com/package/@reallygood83/hwpxeditor)
+[![npm version](https://img.shields.io/npm/v/@masteroflearning/hwpxeditor.svg)](https://www.npmjs.com/package/@masteroflearning/hwpxeditor)
 
 ## 설치
 
 ```bash
-npm install @reallygood83/hwpxeditor react react-dom
+npm install @masteroflearning/hwpxeditor react react-dom
 ```
 
 또는 yarn:
 
 ```bash
-yarn add @reallygood83/hwpxeditor react react-dom
+yarn add @masteroflearning/hwpxeditor react react-dom
 ```
 
 ### 동료 의존성 (Peer Dependencies)
@@ -37,7 +37,7 @@ yarn add @reallygood83/hwpxeditor react react-dom
 ### 기본 사용 (Full Editor)
 
 ```typescript
-import { Editor } from '@reallygood83/hwpxeditor';
+import { Editor } from '@masteroflearning/hwpxeditor';
 
 export default function App() {
   return (
@@ -53,7 +53,7 @@ export default function App() {
 ```typescript
 'use client';
 
-import { Editor } from '@reallygood83/hwpxeditor';
+import { Editor } from '@masteroflearning/hwpxeditor';
 
 export default function EditorPage() {
   return <Editor />;
@@ -69,7 +69,7 @@ export default function EditorPage() {
 export default {
   content: [
     './src/**/*.{js,ts,jsx,tsx}',
-    './node_modules/@reallygood83/hwpxeditor/dist/**/*.js',
+    './node_modules/@masteroflearning/hwpxeditor/dist/**/*.js',
   ],
   theme: {
     extend: {},
@@ -91,7 +91,7 @@ import {
   PageView,
   ParagraphBlock,
   TableBlock
-} from '@reallygood83/hwpxeditor';
+} from '@masteroflearning/hwpxeditor';
 
 export function CustomEditor() {
   return (
@@ -112,7 +112,7 @@ import {
   SecondaryToolbar,
   ToolbarButton,
   ToolbarDropdown
-} from '@reallygood83/hwpxeditor';
+} from '@masteroflearning/hwpxeditor';
 
 export function MyToolbar() {
   return (
@@ -127,7 +127,7 @@ export function MyToolbar() {
 ### 사이드바 컴포넌트
 
 ```typescript
-import { FormatSidebar } from '@reallygood83/hwpxeditor';
+import { FormatSidebar } from '@masteroflearning/hwpxeditor';
 
 export function MySidebar() {
   return <FormatSidebar />;
@@ -137,7 +137,7 @@ export function MySidebar() {
 ### 자 컴포넌트
 
 ```typescript
-import { HorizontalRuler } from '@reallygood83/hwpxeditor';
+import { HorizontalRuler } from '@masteroflearning/hwpxeditor';
 
 export function MyRuler() {
   return <HorizontalRuler />;
@@ -204,7 +204,7 @@ import {
   UNDERLINE_TYPES,     // 밑줄 종류
   COLOR_PRESETS,       // 색상 프리셋
   HIGHLIGHT_COLORS,    // 형광펜 색상
-} from '@reallygood83/hwpxeditor';
+} from '@masteroflearning/hwpxeditor';
 
 import {
   hwpToPx,            // hwp 단위를 픽셀로 변환
@@ -214,7 +214,7 @@ import {
   extractImages,      // 문서에서 이미지 추출
   ensureSkeletonLoaded,// 템플릿 미리로드
   createNewDocument,  // 새 문서 생성
-} from '@reallygood83/hwpxeditor';
+} from '@masteroflearning/hwpxeditor';
 ```
 
 ## 상태 관리 (Store)
@@ -222,7 +222,7 @@ import {
 에디터는 `useEditorStore` 훅으로 상태를 관리합니다:
 
 ```typescript
-import { useEditorStore } from '@reallygood83/hwpxeditor';
+import { useEditorStore } from '@masteroflearning/hwpxeditor';
 
 export function MyComponent() {
   const doc = useEditorStore((s) => s.doc);
@@ -254,7 +254,7 @@ export function MyComponent() {
 
 ### 직접 의존성
 
-- `@reallygood83/hwpxcore` - HWPX 문서 처리 (같은 모노레포)
+- `@masteroflearning/hwpxcore` - HWPX 문서 처리 (같은 모노레포)
 - `lucide-react` - 아이콘 라이브러리
 - `zustand` - 상태 관리 라이브러리
 

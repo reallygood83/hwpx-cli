@@ -1,22 +1,22 @@
-# @reallygood83/hwpx-cli
+# @masteroflearning/hwpx-cli
 
 HWPX 문서 작업을 **터미널 중심**으로 처리하는 CLI입니다.
 
 ## 공지
 
 - 본 CLI는 기존 `@ubermensch1218/hwpx-cli` 기반을 참조해 기능을 확장/업데이트했습니다.
-- 현재 권장 스코프는 `@reallygood83/*` 입니다.
+- 현재 권장 스코프는 `@masteroflearning/*` 입니다.
 
 ## 설치
 
 ```bash
-npm install -g @reallygood83/hwpx-cli
+npm install -g @masteroflearning/hwpx-cli
 ```
 
 또는 실행 시점 설치:
 
 ```bash
-npx @reallygood83/hwpx-cli --help
+npx @masteroflearning/hwpx-cli --help
 ```
 
 ## 핵심 명령 한눈에 보기
@@ -168,5 +168,5 @@ OpenClaw 자동화 품질을 높이려면:
 ## 트러블슈팅
 
 - `No .hwpx files found`: 입력 경로가 올바른지 확인
-- `Cannot find module '@reallygood83/...'`: 루트에서 `pnpm install` 후 의존 패키지 먼저 빌드
+- `Cannot find module '@masteroflearning/...'`: 루트에서 `pnpm install` 후 의존 패키지 먼저 빌드
 - 부분 실패가 많으면 `--fail-fast`를 끄고 `--json` 요약의 `failures`를 먼저 확인

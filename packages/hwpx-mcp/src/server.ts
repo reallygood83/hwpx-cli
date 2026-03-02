@@ -14,8 +14,8 @@ import {
   HwpxDocument,
   HwpxOxmlDocument,
   TextExtractor,
-} from "@reallygood83/hwpxcore";
-import { batchIndexHwpx } from "@reallygood83/hwpx-tools";
+} from "@masteroflearning/hwpxcore";
+import { batchIndexHwpx } from "@masteroflearning/hwpx-tools";
 import * as fs from "fs";
 import * as path from "path";
 

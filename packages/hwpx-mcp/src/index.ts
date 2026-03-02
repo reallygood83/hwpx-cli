@@ -1,5 +1,5 @@
 /**
- * @reallygood83/hwpx-mcp
+ * @masteroflearning/hwpx-mcp
  *
  * MCP server for HWPX document manipulation.
  *
@@ -19,7 +19,7 @@
  * Run the MCP server:
  *
  * ```bash
- * npx @reallygood83/hwpx-mcp
+ * npx @masteroflearning/hwpx-mcp
  * ```
  *
  * Or use with Claude Desktop or other MCP clients by adding to your config:
@@ -29,7 +29,7 @@
  *   "mcpServers": {
  *     "hwpx": {
  *       "command": "npx",
- *       "args": ["@reallygood83/hwpx-mcp"]
+ *       "args": ["@masteroflearning/hwpx-mcp"]
  *     }
  *   }
  * }
@@ -37,4 +37,4 @@
  */
 
 // Re-export types for programmatic use
-export { HwpxDocument, HwpxPackage, TextExtractor } from "@reallygood83/hwpxcore";
+export { HwpxDocument, HwpxPackage, TextExtractor } from "@masteroflearning/hwpxcore";

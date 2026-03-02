@@ -8,7 +8,7 @@ importers:
 
   packages/hwpx-cli:
     dependencies:
-      '@reallygood83/hwpx-tools':
+      '@masteroflearning/hwpx-tools':
         specifier: workspace:*
         version: link:../hwpx-tools
       commander:
@@ -49,7 +49,7 @@ importers:
 
   packages/hwpx-editor:
     dependencies:
-      '@reallygood83/hwpxcore':
+      '@masteroflearning/hwpxcore':
         specifier: workspace:*
         version: link:../hwpx-core
       lucide-react:
@@ -98,15 +98,15 @@ importers:
 
   packages/hwpx-mcp:
     dependencies:
+      '@masteroflearning/hwpx-tools':
+        specifier: workspace:*
+        version: link:../hwpx-tools
+      '@masteroflearning/hwpxcore':
+        specifier: workspace:*
+        version: link:../hwpx-core
       '@modelcontextprotocol/sdk':
         specifier: ^1.0.0
         version: 1.26.0(zod@3.25.76)
-      '@reallygood83/hwpx-tools':
-        specifier: workspace:*
-        version: link:../hwpx-tools
-      '@reallygood83/hwpxcore':
-        specifier: workspace:*
-        version: link:../hwpx-core
       zod:
         specifier: ^3.23.0
         version: 3.25.76
@@ -129,7 +129,7 @@ importers:
       '@hwp.js/parser':
         specifier: 0.0.4-alpha.0
         version: 0.0.4-alpha.0
-      '@reallygood83/hwpxcore':
+      '@masteroflearning/hwpxcore':
         specifier: workspace:*
         version: link:../hwpx-core
     devDependencies:

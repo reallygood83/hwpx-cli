@@ -12,7 +12,7 @@ export default defineConfig([
     shims: true,
     splitting: false,
     minify: false,
-    external: ["@reallygood83/hwpx-tools"],
+    external: ["@masteroflearning/hwpx-tools"],
   },
   // Library
   {
@@ -23,6 +23,6 @@ export default defineConfig([
     dts: true,
     clean: false,
     shims: true,
-    external: ["@reallygood83/hwpx-tools"],
+    external: ["@masteroflearning/hwpx-tools"],
   },
 ]);

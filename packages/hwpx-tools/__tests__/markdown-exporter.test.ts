@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { HwpxDocument, HwpxPackage } from "@reallygood83/hwpxcore";
+import { HwpxDocument, HwpxPackage } from "@masteroflearning/hwpxcore";
 import { exportToMarkdown, exportToMarkdownBundle } from "../src/exporters/markdown.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));

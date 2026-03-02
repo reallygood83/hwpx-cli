@@ -1,5 +1,5 @@
 /**
- * format-bridge.ts — Bridge between UI and @reallygood83/hwpxcore formatting APIs.
+ * format-bridge.ts — Bridge between UI and @masteroflearning/hwpxcore formatting APIs.
  *
  * Reads charPr / paraPr from the document and converts to UI-friendly formats.
  * Also provides methods to apply format changes back to the document.
@@ -12,11 +12,11 @@ import type {
   ParagraphProperty,
   Header,
   Style,
-} from "@reallygood83/hwpxcore";
+} from "@masteroflearning/hwpxcore";
 import {
   parseHeaderXml,
-} from "@reallygood83/hwpxcore";
-import { serializeXml } from "@reallygood83/hwpxcore";
+} from "@masteroflearning/hwpxcore";
+import { serializeXml } from "@masteroflearning/hwpxcore";
 import type { AlignmentType } from "./constants";
 
 // ── Read format types ──────────────────────────────────────────────────────

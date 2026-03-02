@@ -9,7 +9,7 @@ import {
   HwpxOxmlParagraph,
   localName as domLocalName,
   childElements,
-} from "@reallygood83/hwpxcore";
+} from "@masteroflearning/hwpxcore";
 
 export type MarkdownImageMode = "markdown" | "placeholder" | "omit";
 export type MarkdownTextFormatting = "none" | "basic";

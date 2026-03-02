@@ -1,5 +1,5 @@
 {
-  "name": "@reallygood83/hwpx-tools",
+  "name": "@masteroflearning/hwpx-tools",
   "version": "0.1.0",
   "description": "Utility tools for HWPX document conversion and manipulation",
   "type": "module",
@@ -25,7 +25,7 @@
   },
   "dependencies": {
     "@hwp.js/parser": "0.0.4-alpha.0",
-    "@reallygood83/hwpxcore": "workspace:*"
+    "@masteroflearning/hwpxcore": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^25.0.10",

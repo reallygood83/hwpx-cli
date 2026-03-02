@@ -14,7 +14,7 @@ import {
   type TextExportOptions,
   TextExtractor,
   batchIndexHwpx,
-} from "@reallygood83/hwpx-tools";
+} from "@masteroflearning/hwpx-tools";
 import { createHash } from "node:crypto";
 import { mkdir, readdir, stat, writeFile } from "node:fs/promises";
 import { basename, dirname, extname, relative, resolve } from "node:path";

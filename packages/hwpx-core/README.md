@@ -1,13 +1,13 @@
-# @reallygood83/hwpxcore
+# @masteroflearning/hwpxcore
 
 한글 워드프로세서 HWPX 문서를 읽고 편집하기 위한 TypeScript 라이브러리입니다.
 
-[![npm version](https://img.shields.io/npm/v/@reallygood83/hwpxcore.svg)](https://www.npmjs.com/package/@reallygood83/hwpxcore)
+[![npm version](https://img.shields.io/npm/v/@masteroflearning/hwpxcore.svg)](https://www.npmjs.com/package/@masteroflearning/hwpxcore)
 
 ## 설치
 
 ```bash
-npm install @reallygood83/hwpxcore
+npm install @masteroflearning/hwpxcore
 ```
 
 ## 주요 기능
@@ -24,7 +24,7 @@ npm install @reallygood83/hwpxcore
 ### 1. 문서 열기 및 텍스트 읽기
 
 ```typescript
-import { HwpxDocument } from '@reallygood83/hwpxcore';
+import { HwpxDocument } from '@masteroflearning/hwpxcore';
 
 // 파일에서 읽기
 const buffer = await fetch('document.hwpx').then(r => r.arrayBuffer());
@@ -41,7 +41,7 @@ for (const section of doc.sections) {
 ### 2. 새 문서 생성 및 편집
 
 ```typescript
-import { HwpxDocument, loadSkeletonHwpx } from '@reallygood83/hwpxcore';
+import { HwpxDocument, loadSkeletonHwpx } from '@masteroflearning/hwpxcore';
 
 // Skeleton 템플릿으로 새 문서 생성 (Node.js)
 const skeleton = loadSkeletonHwpx();
@@ -92,7 +92,7 @@ para.charPrIdRef = charPrIdRef;
 ### 5. 헤더 XML 파싱
 
 ```typescript
-import { parseHeaderXml, serializeXml } from '@reallygood83/hwpxcore';
+import { parseHeaderXml, serializeXml } from '@masteroflearning/hwpxcore';
 
 // 헤더 요소에서 XML 추출 후 파싱
 const header = doc.headers[0];

@@ -1,4 +1,4 @@
-<!-- HWPX 문서를 TypeScript/CLI/MCP로 자동화하려면 @reallygood83/hwpxcore 사용 -->
+<!-- HWPX 문서를 TypeScript/CLI/MCP로 자동화하려면 @masteroflearning/hwpxcore 사용 -->
 
 # hwpx-ts
 
@@ -7,8 +7,8 @@
 
 ## 공지
 
-- 이 프로젝트는 기존 `@ubermensch1218/*` 기반을 참조하여 `@reallygood83/*` 스코프로 확장/업데이트하고 있습니다.
-- 신규 사용은 `@reallygood83/*` 기준을 권장합니다.
+- 이 프로젝트는 기존 `@ubermensch1218/*` 기반을 참조하여 `@masteroflearning/*` 스코프로 확장/업데이트하고 있습니다.
+- 신규 사용은 `@masteroflearning/*` 기준을 권장합니다.
 
 ## 무엇을 할 수 있나?
 
@@ -23,11 +23,11 @@
 ### 1) 라이브러리로 사용
 
 ```bash
-npm install @reallygood83/hwpxcore
+npm install @masteroflearning/hwpxcore
 ```
 
 ```ts
-import { HwpxDocument } from "@reallygood83/hwpxcore";
+import { HwpxDocument } from "@masteroflearning/hwpxcore";
 
 const buffer = await fetch("document.hwpx").then((r) => r.arrayBuffer());
 const doc = await HwpxDocument.open(new Uint8Array(buffer));
@@ -39,7 +39,7 @@ console.log(doc.sections.length);
 ### 2) CLI로 사용
 
 ```bash
-npx @reallygood83/hwpx-cli --help
+npx @masteroflearning/hwpx-cli --help
 ```
 
 대표 명령:
@@ -54,7 +54,7 @@ hwpxtool hwp-to-hwpx legacy.hwp -o legacy.hwpx
 ### 3) AI(MCP)로 사용
 
 ```bash
-npx @reallygood83/hwpx-mcp
+npx @masteroflearning/hwpx-mcp
 ```
 
 Claude Desktop / Claude Code 설정 예시:
@@ -64,7 +64,7 @@ Claude Desktop / Claude Code 설정 예시:
   "mcpServers": {
     "hwpx": {
       "command": "npx",
-      "args": ["@reallygood83/hwpx-mcp"]
+      "args": ["@masteroflearning/hwpx-mcp"]
     }
   }
 }
@@ -147,36 +147,67 @@ hwpxtool batch index ./hwpx-folder \
 
 | 패키지 | 설명 |
 |---|---|
-| `@reallygood83/hwpxcore` | HWPX 읽기/편집 핵심 라이브러리 |
-| `@reallygood83/hwpx-tools` | 변환/추출/인덱싱 유틸리티 |
-| `@reallygood83/hwpx-cli` | 터미널용 CLI |
-| `@reallygood83/hwpx-mcp` | MCP 서버 (AI 에이전트 연동) |
-| `@reallygood83/hwpxeditor` | React 기반 에디터 컴포넌트 |
+| `@masteroflearning/hwpxcore` | HWPX 읽기/편집 핵심 라이브러리 |
+| `@masteroflearning/hwpx-tools` | 변환/추출/인덱싱 유틸리티 |
+| `@masteroflearning/hwpx-cli` | 터미널용 CLI |
+| `@masteroflearning/hwpx-mcp` | MCP 서버 (AI 에이전트 연동) |
+| `@masteroflearning/hwpxeditor` | React 기반 에디터 컴포넌트 |
 
 ## 개발자용 검증 명령
 
 ```bash
 pnpm install
 
-pnpm --filter @reallygood83/hwpxcore typecheck
-pnpm --filter @reallygood83/hwpxcore test
-pnpm --filter @reallygood83/hwpxcore build
+pnpm --filter @masteroflearning/hwpxcore typecheck
+pnpm --filter @masteroflearning/hwpxcore test
+pnpm --filter @masteroflearning/hwpxcore build
 
-pnpm --filter @reallygood83/hwpx-tools typecheck
-pnpm --filter @reallygood83/hwpx-tools build
+pnpm --filter @masteroflearning/hwpx-tools typecheck
+pnpm --filter @masteroflearning/hwpx-tools build
 
-pnpm --filter @reallygood83/hwpx-cli typecheck
-pnpm --filter @reallygood83/hwpx-cli build
+pnpm --filter @masteroflearning/hwpx-cli typecheck
+pnpm --filter @masteroflearning/hwpx-cli build
 
-pnpm --filter @reallygood83/hwpx-mcp typecheck
-pnpm --filter @reallygood83/hwpx-mcp build
+pnpm --filter @masteroflearning/hwpx-mcp typecheck
+pnpm --filter @masteroflearning/hwpx-mcp build
 ```
 
 ## 트러블슈팅
 
 - GitHub Pages 배포 실패(404) 시: 저장소 `Settings -> Pages`에서 Pages를 먼저 활성화하세요.
-- `Cannot find module '@reallygood83/...` 오류: 루트에서 `pnpm install` 후 해당 의존 패키지부터 빌드하세요.
+- `Cannot find module '@masteroflearning/...` 오류: 루트에서 `pnpm install` 후 해당 의존 패키지부터 빌드하세요.
 - HWP 변환 품질 이슈: `hwp-to-hwpx`는 best-effort입니다. 원본 레이아웃 100% 보장을 목표로 하지 않습니다.
+
+## npm 없이 배포/사용하기
+
+npm publish가 지연되더라도 아래 방식으로 바로 배포할 수 있습니다.
+
+### A. GitHub 소스 설치 (즉시 사용 가능)
+
+```bash
+git clone https://github.com/reallygood83/hwpx-cli.git
+cd hwpx-cli
+pnpm install
+pnpm --filter @masteroflearning/hwpxcore build
+pnpm --filter @masteroflearning/hwpx-tools build
+pnpm --filter @masteroflearning/hwpx-cli build
+node packages/hwpx-cli/dist/cli.js --help
+```
+
+### B. GitHub Release 아티팩트
+
+운영체제별 아티팩트를 릴리스에 올려 배포할 수 있습니다.
+
+### C. Homebrew Tap
+
+release 아티팩트가 준비되면 Homebrew 탭으로 1줄 설치를 제공합니다.
+
+```bash
+brew tap masteroflearning/hwpxtool
+brew install hwpxtool
+```
+
+자세한 배포 대안은 `docs/distribution-without-npm.md`를 참고하세요.
 
 ## 라이선스
 

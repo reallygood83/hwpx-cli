@@ -7,5 +7,5 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   splitting: false,
-  external: ["@reallygood83/hwpxcore"],
+  external: ["@masteroflearning/hwpxcore"],
 });

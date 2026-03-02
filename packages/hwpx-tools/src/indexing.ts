@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises";
 import { basename, dirname, extname, relative, resolve } from "node:path";
-import { HwpxPackage, TextExtractor } from "@reallygood83/hwpxcore";
+import { HwpxPackage, TextExtractor } from "@masteroflearning/hwpxcore";
 
 export type BatchIndexFormat = "jsonl" | "json";
 export type BatchChunkBy = "paragraph" | "section" | "document";

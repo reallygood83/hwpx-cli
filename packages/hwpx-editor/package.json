@@ -1,5 +1,5 @@
 {
-  "name": "@reallygood83/hwpxeditor",
+  "name": "@masteroflearning/hwpxeditor",
   "version": "0.1.2",
   "description": "React editor components for HWPX documents with Korean word processor-style UI",
   "type": "module",
@@ -28,7 +28,7 @@
     "react-dom": ">=18"
   },
   "dependencies": {
-    "@reallygood83/hwpxcore": "workspace:*",
+    "@masteroflearning/hwpxcore": "workspace:*",
     "lucide-react": "^0.511.0",
     "zustand": "^5.0.0"
   },

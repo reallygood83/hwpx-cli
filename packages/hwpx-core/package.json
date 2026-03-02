@@ -1,5 +1,5 @@
 {
-  "name": "@reallygood83/hwpxcore",
+  "name": "@masteroflearning/hwpxcore",
   "version": "0.1.3",
   "description": "TypeScript library for reading and editing HWPX documents",
   "type": "module",

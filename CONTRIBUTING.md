@@ -18,17 +18,17 @@ pnpm install
 
 ```bash
 # core 패키지 기본 검증
-pnpm --filter @reallygood83/hwpxcore typecheck
-pnpm --filter @reallygood83/hwpxcore test
-pnpm --filter @reallygood83/hwpxcore build
+pnpm --filter @masteroflearning/hwpxcore typecheck
+pnpm --filter @masteroflearning/hwpxcore test
+pnpm --filter @masteroflearning/hwpxcore build
 ```
 
 ```bash
 # editor/mcp/cli/tools를 수정했다면 해당 패키지도 같은 방식으로 검증
-pnpm --filter @reallygood83/hwpxeditor build
-pnpm --filter @reallygood83/hwpx-mcp test
-pnpm --filter @reallygood83/hwpx-cli build
-pnpm --filter @reallygood83/hwpx-tools build
+pnpm --filter @masteroflearning/hwpxeditor build
+pnpm --filter @masteroflearning/hwpx-mcp test
+pnpm --filter @masteroflearning/hwpx-cli build
+pnpm --filter @masteroflearning/hwpx-tools build
 ```
 
 ## PR 체크리스트

@@ -2,7 +2,7 @@
  * Extract binary image data from an HwpxDocument package as data URLs.
  */
 
-import type { HwpxPackage } from "@reallygood83/hwpxcore";
+import type { HwpxPackage } from "@masteroflearning/hwpxcore";
 
 /** Map of binaryItemIdRef → data:... URL for all images in the package. */
 export function extractImages(pkg: HwpxPackage): Map<string, string> {

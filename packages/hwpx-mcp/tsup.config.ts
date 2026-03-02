@@ -9,7 +9,7 @@ export default defineConfig([
     sourcemap: true,
     clean: true,
     splitting: false,
-    external: ["@reallygood83/hwpxcore"],
+    external: ["@masteroflearning/hwpxcore"],
   },
   // Server executable build
   {
@@ -21,7 +21,7 @@ export default defineConfig([
     splitting: false,
     external: [
       "@modelcontextprotocol/sdk",
-      "@reallygood83/hwpxcore",
+      "@masteroflearning/hwpxcore",
       "zod",
     ],
   },

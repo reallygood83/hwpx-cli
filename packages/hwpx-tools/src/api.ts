@@ -8,7 +8,7 @@ import {
   HwpxPackage,
   HwpxOxmlDocument,
   TextExtractor,
-} from "@reallygood83/hwpxcore";
+} from "@masteroflearning/hwpxcore";
 import {
   exportToMarkdown as toMarkdown,
   exportToMarkdownBundle as toMarkdownBundle,

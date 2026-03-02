@@ -1,5 +1,5 @@
 {
-  "name": "@reallygood83/hwpx-cli",
+  "name": "@masteroflearning/hwpx-cli",
   "version": "0.1.0",
   "description": "CLI tool for HWPX file operations",
   "type": "module",
@@ -29,10 +29,10 @@
     "korean",
     "document"
   ],
-  "author": "reallygood83",
+  "author": "masteroflearning",
   "license": "Apache-2.0",
   "dependencies": {
-    "@reallygood83/hwpx-tools": "workspace:*",
+    "@masteroflearning/hwpx-tools": "workspace:*",
     "commander": "^12.0.0"
   },
   "devDependencies": {
