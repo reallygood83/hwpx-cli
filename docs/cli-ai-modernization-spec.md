@@ -5,7 +5,7 @@
 - 현재 저장소는 이미 CLI 패키지(`@ubermensch1218/hwpx-cli`)와 MCP 서버(`@ubermensch1218/hwpx-mcp`)를 보유하고 있다.
 - 다만 사용자 경험은 "라이브러리 중심"으로 보이고, CLI를 중심으로 문서 작성/변환/검증/자동화하는 워크플로우는 아직 완결형이 아니다.
 - 목표는 HWPX 문서작업 사용자가 GUI 없이도 터미널에서 실무를 끝낼 수 있도록 CLI를 제품의 중심 인터페이스로 재정의하는 것이다.
-- 추가 요구: 퍼블리셔/스코프를 `@ubermensch1218`에서 `@reallygood83`으로 이관한다.
+- 추가 요구: 퍼블리셔/스코프를 `@ubermensch1218`에서 `@masteroflearning`으로 이관한다.
 
 ## 2) 비전
 
@@ -18,7 +18,7 @@
 1. **CLI-First 완성**: 읽기/추출/변환/검증/수정/배치 작업을 CLI에서 일관되게 제공
 2. **AI-Ready 출력 계약**: 모든 주요 명령이 `--json` 출력 모드를 지원하고 스키마를 고정
 3. **자동화 친화성**: 파이프/CI/스크립트 환경에서 예측 가능하게 동작 (종료 코드, stderr/stdout 규약)
-4. **브랜딩 이관**: 패키지 스코프를 `@reallygood83/*`로 정식 전환
+4. **브랜딩 이관**: 패키지 스코프를 `@masteroflearning/*`로 정식 전환
 
 ### 3.2 비목표 (Non-Goals)
 
@@ -128,14 +128,14 @@
 - MCP: AI 에이전트가 CLI 기능을 도구 형태로 안전하게 호출
 - 원칙: MCP는 가능한 한 CLI 엔진을 재사용해 동작 일치 보장
 
-## 8) 패키지 스코프 이관 계획 (`@reallygood83`)
+## 8) 패키지 스코프 이관 계획 (`@masteroflearning`)
 
 ## 8.1 변경 대상
 
-- `@ubermensch1218/hwpxcore` -> `@reallygood83/hwpxcore`
-- `@ubermensch1218/hwpx-tools` -> `@reallygood83/hwpx-tools`
-- `@ubermensch1218/hwpx-cli` -> `@reallygood83/hwpx-cli`
-- `@ubermensch1218/hwpx-mcp` -> `@reallygood83/hwpx-mcp`
+- `@ubermensch1218/hwpxcore` -> `@masteroflearning/hwpxcore`
+- `@ubermensch1218/hwpx-tools` -> `@masteroflearning/hwpx-tools`
+- `@ubermensch1218/hwpx-cli` -> `@masteroflearning/hwpx-cli`
+- `@ubermensch1218/hwpx-mcp` -> `@masteroflearning/hwpx-mcp`
 
 ## 8.2 이행 전략
 
@@ -173,7 +173,7 @@
 
 ### Milestone 4 - 스코프 이관 (1~2주)
 
-- `@reallygood83` 퍼블리시 체계 전환
+- `@masteroflearning` 퍼블리시 체계 전환
 - 구 스코프 deprecate + 마이그레이션 공지
 
 ## 10) 수용 기준 (Acceptance Criteria)
@@ -182,7 +182,7 @@
 2. 에러 케이스가 상태 코드 정책과 1:1로 맞음
 3. `batch run`으로 100개 HWPX 처리 시 리포트 생성
 4. MCP 경유 호출과 CLI 직접 호출의 결과(핵심 필드)가 동일
-5. 문서/README의 설치 예제가 `@reallygood83/*` 기준으로 일관됨
+5. 문서/README의 설치 예제가 `@masteroflearning/*` 기준으로 일관됨
 
 ## 11) 운영/품질 지표
 
@@ -204,11 +204,11 @@
 
 1. CLI 공통 출력 envelope 구현 (`--json` 우선)
 2. 명령 체계를 `doc/content/convert/batch/ai/project`로 리팩터링 설계
-3. `@reallygood83` npm org 준비 및 퍼블리시 권한 확인
-4. 스코프 이관 가이드 문서(`docs/migration-to-reallygood83.md`) 추가
+3. `@masteroflearning` npm org 준비 및 퍼블리시 권한 확인
+4. 스코프 이관 가이드 문서(`docs/migration-to-masteroflearning.md`) 추가
 
 ---
 
-Owner: `@reallygood83`  
+Owner: `@masteroflearning`  
 Status: Draft v1  
 Updated: 2026-03-02
