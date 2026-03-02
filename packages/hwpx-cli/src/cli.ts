@@ -13,6 +13,7 @@ import {
   type MarkdownImageMode,
   type TextExportOptions,
   TextExtractor,
+  batchIndexHwpx,
 } from "@reallygood83/hwpx-tools";
 import { createHash } from "node:crypto";
 import { mkdir, readdir, stat, writeFile } from "node:fs/promises";
@@ -51,6 +52,9 @@ export interface BatchIndexOptions {
   maxChars?: number;
   includeEmpty?: boolean;
   failFast?: boolean;
+  incremental?: boolean;
+  statePath?: string;
+  schema?: boolean;
   json?: boolean;
 }
 
@@ -492,9 +496,35 @@ export function createProgram(): Command {
     .option("--max-chars <number>", "Maximum characters per chunk", (value) => parseInt(value, 10), 1200)
     .option("--include-empty", "Include empty chunks")
     .option("--fail-fast", "Stop at the first failed file")
+    .option("--incremental", "Re-index only changed files using state cache")
+    .option("--state-path <file>", "Index state file path (default: <output>.state.json)")
+    .option("--schema", "Print output record schema and exit")
     .option("--json", "Print summary as JSON to stdout")
     .action(async (input: string, options: BatchIndexOptions) => {
-      const startedAt = new Date().toISOString();
+      if (options.schema) {
+        const schema = {
+          id: "sha256(relativePath|chunkBy|position|chunkIndex|text)",
+          sourcePath: "absolute path",
+          relativePath: "path relative to input base",
+          sourceFile: "basename",
+          chunkBy: "paragraph|section|document",
+          chunkIndex: "number",
+          sectionIndex: "number|null",
+          paragraphIndex: "number|null",
+          text: "normalized chunk text",
+          metadata: {
+            title: "string|null",
+            author: "string|null",
+            date: "string|null",
+            sections: "number",
+            paragraphs: "number",
+            indexedAt: "ISO datetime",
+          },
+        };
+        console.log(JSON.stringify(schema, null, 2));
+        return;
+      }
+
       const inputPath = resolve(input);
       const format = options.format === "json" ? "json" : "jsonl";
       const chunkBy =
@@ -504,173 +534,72 @@ export function createProgram(): Command {
       const maxChars = Number.isFinite(options.maxChars) && (options.maxChars ?? 0) > 0
         ? Math.floor(options.maxChars as number)
         : 1200;
-      const includeEmpty = !!options.includeEmpty;
-      const failures: BatchFailure[] = [];
-      const records: BatchIndexRecord[] = [];
-      let indexedFiles = 0;
 
       try {
-        const files = await listHwpxFiles(inputPath);
-        if (files.length === 0) {
-          throw new Error(`No .hwpx files found in: ${inputPath}`);
-        }
-
         const inputStats = await stat(inputPath);
         const baseDir = inputStats.isDirectory() ? inputPath : dirname(inputPath);
         const outputPath = resolve(options.output ?? resolve(baseDir, "hwpx-index.jsonl"));
+        const defaultStatePath = `${outputPath}.state.json`;
+        const statePath = resolve(options.statePath ?? defaultStatePath);
 
-        for (const filePath of files) {
-          try {
-            const hwpx = await openHwpxFile(filePath);
-            const extractor = new TextExtractor(hwpx);
-            const info = await getHwpxInfo(filePath);
-            const indexedAt = new Date().toISOString();
-            const relPath = toPosixPath(relative(baseDir, filePath) || basename(filePath));
-
-            let localChunkIndex = 0;
-            if (chunkBy === "paragraph") {
-              const paragraphs = extractor.extractParagraphs();
-              for (const paragraph of paragraphs) {
-                const splitChunks = splitByMaxChars(paragraph.text, maxChars);
-                for (const chunkText of splitChunks) {
-                  const normalized = normalizeChunkText(chunkText);
-                  if (!includeEmpty && !normalized) continue;
-                  records.push({
-                    id: toStableId([relPath, chunkBy, paragraph.sectionIndex, paragraph.paragraphIndex, localChunkIndex, normalized]),
-                    sourcePath: filePath,
-                    relativePath: relPath,
-                    sourceFile: basename(filePath),
-                    chunkBy,
-                    chunkIndex: localChunkIndex,
-                    sectionIndex: paragraph.sectionIndex,
-                    paragraphIndex: paragraph.paragraphIndex,
-                    text: normalized,
-                    metadata: {
-                      title: typeof info.title === "string" ? info.title : null,
-                      author: typeof info.author === "string" ? info.author : null,
-                      date: typeof info.date === "string" ? info.date : null,
-                      sections: info.sections,
-                      paragraphs: info.paragraphs,
-                      indexedAt,
-                    },
-                  });
-                  localChunkIndex += 1;
-                }
-              }
-            } else if (chunkBy === "section") {
-              const sectionTexts = extractor.extractSectionTexts("\n");
-              for (const [sectionIndex, sectionText] of sectionTexts.entries()) {
-                const splitChunks = splitByMaxChars(sectionText, maxChars);
-                for (const chunkText of splitChunks) {
-                  const normalized = normalizeChunkText(chunkText);
-                  if (!includeEmpty && !normalized) continue;
-                  records.push({
-                    id: toStableId([relPath, chunkBy, sectionIndex, localChunkIndex, normalized]),
-                    sourcePath: filePath,
-                    relativePath: relPath,
-                    sourceFile: basename(filePath),
-                    chunkBy,
-                    chunkIndex: localChunkIndex,
-                    sectionIndex,
-                    paragraphIndex: null,
-                    text: normalized,
-                    metadata: {
-                      title: typeof info.title === "string" ? info.title : null,
-                      author: typeof info.author === "string" ? info.author : null,
-                      date: typeof info.date === "string" ? info.date : null,
-                      sections: info.sections,
-                      paragraphs: info.paragraphs,
-                      indexedAt,
-                    },
-                  });
-                  localChunkIndex += 1;
-                }
-              }
-            } else {
-              const splitChunks = splitByMaxChars(extractor.extractText("\n"), maxChars);
-              for (const chunkText of splitChunks) {
-                const normalized = normalizeChunkText(chunkText);
-                if (!includeEmpty && !normalized) continue;
-                records.push({
-                  id: toStableId([relPath, chunkBy, localChunkIndex, normalized]),
-                  sourcePath: filePath,
-                  relativePath: relPath,
-                  sourceFile: basename(filePath),
-                  chunkBy,
-                  chunkIndex: localChunkIndex,
-                  sectionIndex: null,
-                  paragraphIndex: null,
-                  text: normalized,
-                  metadata: {
-                    title: typeof info.title === "string" ? info.title : null,
-                    author: typeof info.author === "string" ? info.author : null,
-                    date: typeof info.date === "string" ? info.date : null,
-                    sections: info.sections,
-                    paragraphs: info.paragraphs,
-                    indexedAt,
-                  },
-                });
-                localChunkIndex += 1;
-              }
-            }
-
-            indexedFiles += 1;
-          } catch (error) {
-            const message = error instanceof Error ? error.message : String(error);
-            failures.push({ file: filePath, error: message });
-            if (options.failFast) break;
-          }
-        }
-
-        await mkdir(dirname(outputPath), { recursive: true });
-        const payload =
-          format === "json"
-            ? JSON.stringify(records, null, 2)
-            : `${records.map((record) => JSON.stringify(record)).join("\n")}${records.length > 0 ? "\n" : ""}`;
-        await writeFile(outputPath, payload, "utf-8");
-
-        const summary = {
-          ok: failures.length === 0,
-          command: "batch index",
-          startedAt,
-          finishedAt: new Date().toISOString(),
-          input: inputPath,
-          output: outputPath,
+        const result = await batchIndexHwpx({
+          inputPath,
+          outputPath,
           format,
           chunkBy,
           maxChars,
-          scannedFiles: files.length,
-          indexedFiles,
-          failedFiles: failures.length,
-          chunkCount: records.length,
-          failures,
+          includeEmpty: !!options.includeEmpty,
+          failFast: !!options.failFast,
+          incremental: !!options.incremental,
+          statePath,
+        });
+
+        const summary = {
+          ok: result.ok,
+          command: result.command,
+          startedAt: result.startedAt,
+          finishedAt: result.finishedAt,
+          input: result.input,
+          output: result.output,
+          statePath: result.statePath,
+          format: result.format,
+          chunkBy: result.chunkBy,
+          maxChars: result.maxChars,
+          incremental: result.incremental,
+          scannedFiles: result.scannedFiles,
+          indexedFiles: result.indexedFiles,
+          skippedFiles: result.skippedFiles,
+          failedFiles: result.failedFiles,
+          chunkCount: result.chunkCount,
+          failures: result.failures,
         };
 
         if (options.json) {
           console.log(JSON.stringify(summary, null, 2));
         } else {
-          console.error(`Indexed files: ${indexedFiles}/${files.length}`);
-          console.error(`Chunks written: ${records.length}`);
-          console.error(`Output: ${outputPath}`);
-          if (failures.length > 0) {
-            console.error(`Failed files: ${failures.length}`);
-            for (const failure of failures) {
+          console.error(`Indexed files: ${result.indexedFiles}/${result.scannedFiles}`);
+          if (result.incremental) {
+            console.error(`Skipped files (unchanged): ${result.skippedFiles}`);
+          }
+          console.error(`Chunks written: ${result.chunkCount}`);
+          console.error(`Output: ${result.output}`);
+          console.error(`State: ${result.statePath}`);
+          if (result.failures.length > 0) {
+            console.error(`Failed files: ${result.failures.length}`);
+            for (const failure of result.failures) {
               console.error(`- ${failure.file}: ${failure.error}`);
             }
           }
         }
 
-        if (failures.length > 0 && indexedFiles > 0) {
+        if (result.failedFiles > 0 && result.indexedFiles > 0) {
           process.exit(4);
         }
-        if (failures.length > 0 && indexedFiles === 0) {
+        if (result.failedFiles > 0 && result.indexedFiles === 0) {
           process.exit(2);
         }
       } catch (error) {
-        console.error(
-          "Error indexing files:",
-          error instanceof Error ? error.message : String(error)
-        );
+        console.error("Error indexing files:", error instanceof Error ? error.message : String(error));
         process.exit(1);
       }
     });

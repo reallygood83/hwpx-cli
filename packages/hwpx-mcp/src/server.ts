@@ -15,6 +15,7 @@ import {
   HwpxOxmlDocument,
   TextExtractor,
 } from "@reallygood83/hwpxcore";
+import { batchIndexHwpx } from "@reallygood83/hwpx-tools";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -319,6 +320,78 @@ server.tool(
           {
             type: "text" as const,
             text: `Error getting HWPX info: ${message}`,
+          },
+        ],
+        isError: true,
+      };
+    }
+  }
+);
+
+// Tool 5: hwpx_batch_index - Index multiple HWPX files for AI retrieval
+server.tool(
+  "hwpx_batch_index",
+  "Index one or many HWPX files into AI-ready JSONL/JSON chunks",
+  {
+    input: z.string().describe("Absolute or relative input path (file or directory)"),
+    output: z.string().optional().describe("Output index path (default: <input>/hwpx-index.jsonl)"),
+    format: z.enum(["jsonl", "json"]).optional().describe("Output format"),
+    chunkBy: z.enum(["paragraph", "section", "document"]).optional().describe("Chunk strategy"),
+    maxChars: z.number().int().positive().optional().describe("Maximum characters per chunk"),
+    includeEmpty: z.boolean().optional().describe("Include empty chunks"),
+    failFast: z.boolean().optional().describe("Stop at first failed file"),
+    incremental: z.boolean().optional().describe("Reuse unchanged file chunks using state file"),
+    statePath: z.string().optional().describe("State file path for incremental mode"),
+  },
+  async ({ input, output, format, chunkBy, maxChars, includeEmpty, failFast, incremental, statePath }) => {
+    try {
+      const inputPath = path.resolve(input);
+      const inputStats = fs.statSync(inputPath);
+      const baseDir = inputStats.isDirectory() ? inputPath : path.dirname(inputPath);
+      const outputPath = path.resolve(output ?? path.resolve(baseDir, "hwpx-index.jsonl"));
+      const resolvedStatePath = path.resolve(statePath ?? `${outputPath}.state.json`);
+
+      const result = await batchIndexHwpx({
+        inputPath,
+        outputPath,
+        format: format ?? "jsonl",
+        chunkBy: chunkBy ?? "paragraph",
+        maxChars: maxChars ?? 1200,
+        includeEmpty: !!includeEmpty,
+        failFast: !!failFast,
+        incremental: !!incremental,
+        statePath: resolvedStatePath,
+      });
+
+      const summary = {
+        ok: result.ok,
+        input: result.input,
+        output: result.output,
+        statePath: result.statePath,
+        scannedFiles: result.scannedFiles,
+        indexedFiles: result.indexedFiles,
+        skippedFiles: result.skippedFiles,
+        failedFiles: result.failedFiles,
+        chunkCount: result.chunkCount,
+        incremental: result.incremental,
+        failures: result.failures,
+      };
+
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: JSON.stringify(summary, null, 2),
+          },
+        ],
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: `Error indexing HWPX files: ${message}`,
           },
         ],
         isError: true,

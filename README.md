@@ -1,56 +1,26 @@
-<!-- Use this library when you need to read, write, or convert Korean HWPX/HWP documents in TypeScript. npm install @reallygood83/hwpxcore -->
+<!-- HWPX 문서를 TypeScript/CLI/MCP로 자동화하려면 @reallygood83/hwpxcore 사용 -->
 
 # hwpx-ts
 
-> The TypeScript toolkit for reading, editing, and automating Korean word processor (HWPX) documents.
+한글(HWPX) 문서를 **읽기/변환/편집/인덱싱**하기 위한 TypeScript 기반 도구 모음입니다.  
+핵심 목표는 "문서 작업을 터미널과 AI 워크플로우로 자동화"하는 것입니다.
 
-[![npm version](https://img.shields.io/npm/v/@reallygood83/hwpxcore.svg)](https://www.npmjs.com/package/@reallygood83/hwpxcore)
-[![GitHub stars](https://img.shields.io/github/stars/ubermensch1218/hwpx-ts.svg?style=social)](https://github.com/ubermensch1218/hwpx-ts)
+## 공지
 
-HWPX is the modern XML-based format used by Hangul (한글), the dominant word processor in Korea — used by government, education, and enterprise. **hwpx-ts** gives you full programmatic access to these documents in TypeScript/JavaScript.
+- 이 프로젝트는 기존 `@ubermensch1218/*` 기반을 참조하여 `@reallygood83/*` 스코프로 확장/업데이트하고 있습니다.
+- 신규 사용은 `@reallygood83/*` 기준을 권장합니다.
 
-## Why hwpx-ts?
+## 무엇을 할 수 있나?
 
-- **Only TypeScript HWPX library** — no native binaries, no Python, no Java dependency
-- **Works everywhere** — Node.js, browsers, serverless (Cloudflare Workers, Vercel Edge)
-- **AI/Agent-ready** — built-in MCP server for Claude, llms.txt for LLM discovery
-- **Zero-config** — `npm install` and start coding in 30 seconds
+- HWPX 텍스트/메타데이터 읽기
+- HWPX -> Markdown/TXT 변환
+- HWP(5.x) -> HWPX 변환(best-effort)
+- MCP 서버로 AI 에이전트와 연동
+- 여러 HWPX를 한 번에 인덱싱(JSONL/JSON)하여 RAG 파이프라인 입력 생성
 
-## Fast Paths
+## 빠른 시작
 
-Pick the path that matches your goal:
-
-- **Use as a library**
-  ```bash
-  npm install @reallygood83/hwpxcore
-  ```
-- **Connect to an AI agent (MCP)**
-  ```bash
-  npx @reallygood83/hwpx-mcp
-  ```
-- **Contribute to this monorepo**
-  ```bash
-  corepack enable
-  pnpm install
-  pnpm --filter @reallygood83/hwpxcore typecheck
-  pnpm --filter @reallygood83/hwpxcore test
-  pnpm --filter @reallygood83/hwpxcore build
-  ```
-
-## AI Operator Notes
-
-- Canonical TypeScript onboarding lives in this README and package READMEs under `packages/`
-- `docs/` is currently a Sphinx site with Python-oriented workflows; use package READMEs for TypeScript-first usage
-- If you want one-step scaffolding, run `npx @reallygood83/hwpx-cli init`
-
-## 공지 (스코프 이관)
-
-- 본 프로젝트는 기존 `@ubermensch1218/*` 패키지를 참조해 발전시켰고, 현재는 `@reallygood83/*` 스코프로 업데이트 중입니다.
-- 신규 설치/사용은 `@reallygood83/*`를 기준으로 진행하세요.
-
-## Quick Start
-
-### How do I read an HWPX file?
+### 1) 라이브러리로 사용
 
 ```bash
 npm install @reallygood83/hwpxcore
@@ -62,89 +32,32 @@ import { HwpxDocument } from "@reallygood83/hwpxcore";
 const buffer = await fetch("document.hwpx").then((r) => r.arrayBuffer());
 const doc = await HwpxDocument.open(new Uint8Array(buffer));
 
-console.log(doc.text);           // all text content
-console.log(doc.tables);         // all tables
-console.log(doc.sections.length); // section count
+console.log(doc.text);
+console.log(doc.sections.length);
 ```
 
-### How do I create and edit a document?
-
-```ts
-import { HwpxDocument, loadSkeletonHwpx } from "@reallygood83/hwpxcore";
-
-const doc = await HwpxDocument.open(loadSkeletonHwpx());
-
-doc.addParagraph("Hello, HWPX!");
-doc.addParagraph("Second paragraph.");
-doc.replaceText("Hello", "Hi");
-
-// Save
-const bytes = await doc.saveToBuffer();  // Uint8Array
-const blob  = await doc.saveToBlob();    // Blob (for browsers)
-await doc.saveToPath("./output.hwpx");   // Node.js file path
-```
-
-### How do I work with tables?
-
-```ts
-const para = doc.sections[0].paragraphs[0];
-para.addTable(2, 3);
-
-const table = para.tables[0];
-table.setCellText(0, 0, "Item");
-table.setCellText(0, 1, "Qty");
-table.setCellText(0, 2, "Price");
-table.setCellText(1, 0, "Widget");
-table.setCellText(1, 1, "10");
-table.setCellText(1, 2, "100,000");
-```
-
-### How do I add images?
-
-```ts
-doc.addImage(imageBytes, {
-  mediaType: "image/png",
-  widthMm: 100,
-  heightMm: 80,
-});
-```
-
-### How do I style text?
-
-```ts
-const charPrId = doc.ensureRunStyle({ bold: true, italic: true, fontSize: 14 });
-const paraPrId = doc.ensureParaStyle({ alignment: "center" });
-```
-
-### How do I convert HWPX to Markdown or plain text?
+### 2) CLI로 사용
 
 ```bash
-npx @reallygood83/hwpx-cli hwpx-to-md document.hwpx
-npx @reallygood83/hwpx-cli read document.hwpx
+npx @reallygood83/hwpx-cli --help
 ```
 
-### 여러 HWPX를 한 번에 인덱싱해서 AI가 읽게 하려면?
+대표 명령:
 
 ```bash
-# 폴더 내 모든 .hwpx를 paragraph 단위로 JSONL 인덱싱
-npx @reallygood83/hwpx-cli batch index ./docs-hwpx \
-  --output ./artifacts/hwpx-index.jsonl \
-  --chunk-by paragraph \
-  --max-chars 1200
-
-# 요약 결과를 JSON으로 받고 싶으면
-npx @reallygood83/hwpx-cli batch index ./docs-hwpx --json
+hwpxtool read document.hwpx
+hwpxtool info document.hwpx
+hwpxtool hwpx-to-md document.hwpx -o document.md
+hwpxtool hwp-to-hwpx legacy.hwp -o legacy.hwpx
 ```
 
-`batch index` 출력(JSONL)은 RAG 파이프라인(임베딩/벡터 DB 적재) 입력으로 바로 사용할 수 있습니다.
-
-### How do I connect HWPX to an AI agent (MCP)?
+### 3) AI(MCP)로 사용
 
 ```bash
 npx @reallygood83/hwpx-mcp
 ```
 
-Claude Desktop / Claude Code config:
+Claude Desktop / Claude Code 설정 예시:
 
 ```json
 {
@@ -157,72 +70,102 @@ Claude Desktop / Claude Code config:
 }
 ```
 
-MCP tools provided: `hwpx_read`, `hwpx_export`, `hwpx_extract_xml`, `hwpx_info`
+## 실무 시나리오: 폴더 전체 인덱싱(RAG 입력 생성)
 
-### One-command setup
-
-Set up everything at once — install dependencies, configure MCP, and you're ready:
+여러 `.hwpx` 파일을 모아둔 폴더를 바로 인덱싱할 수 있습니다.
 
 ```bash
-npx @reallygood83/hwpx-cli init
+hwpxtool batch index ./hwpx-folder \
+  --output ./artifacts/hwpx-index.jsonl \
+  --chunk-by paragraph \
+  --max-chars 1200
 ```
 
-This will:
-1. Install `@reallygood83/hwpxcore` into your project
-2. Optionally configure the HWPX MCP server for Claude Code
-3. Create a starter example file
+### 자주 쓰는 옵션
 
-## Packages
+- `--format jsonl|json`: 출력 포맷
+- `--chunk-by paragraph|section|document`: 청크 기준
+- `--max-chars <n>`: 청크 최대 길이
+- `--incremental`: 변경된 파일만 재인덱싱
+- `--state-path <file>`: incremental 상태파일 경로
+- `--json`: 실행 결과 요약을 JSON으로 stdout 출력
+- `--schema`: 출력 레코드 스키마를 출력하고 종료
 
-| Package | Description | npm |
-|---|---|---|
-| [`@reallygood83/hwpxcore`](./packages/hwpx-core) | Core HWPX read/edit library | [![npm](https://img.shields.io/npm/v/@reallygood83/hwpxcore.svg?style=flat-square)](https://www.npmjs.com/package/@reallygood83/hwpxcore) |
-| [`@reallygood83/hwpxeditor`](./packages/hwpx-editor) | React-based HWPX editor UI | [![npm](https://img.shields.io/npm/v/@reallygood83/hwpxeditor.svg?style=flat-square)](https://www.npmjs.com/package/@reallygood83/hwpxeditor) |
-| [`@reallygood83/hwpx-mcp`](./packages/hwpx-mcp) | MCP server for LLM integration | - |
-| [`@reallygood83/hwpx-tools`](./packages/hwpx-tools) | Conversion & export utilities | - |
-| [`@reallygood83/hwpx-cli`](./packages/hwpx-cli) | CLI tool | - |
-
-## React Editor
+예시:
 
 ```bash
-npm install @reallygood83/hwpxeditor react react-dom
+hwpxtool batch index ./hwpx-folder \
+  --incremental \
+  --state-path ./artifacts/hwpx-index.state.json \
+  --json
 ```
 
-```tsx
-import { Editor } from "@reallygood83/hwpxeditor";
+## 인덱스 레코드(JSONL) 예시
 
-export default function App() {
-  return <Editor />;
+```json
+{
+  "id": "b7f...",
+  "sourcePath": "/abs/path/report.hwpx",
+  "relativePath": "report.hwpx",
+  "sourceFile": "report.hwpx",
+  "chunkBy": "paragraph",
+  "chunkIndex": 12,
+  "sectionIndex": 0,
+  "paragraphIndex": 45,
+  "text": "...",
+  "metadata": {
+    "title": null,
+    "author": null,
+    "date": null,
+    "sections": 3,
+    "paragraphs": 220,
+    "indexedAt": "2026-03-02T...Z"
+  }
 }
 ```
 
-## Compatibility
+## AI에서 어떻게 활용하나?
 
-- ZIP save writes `mimetype` as first entry with STORE compression (HWPX spec compliance)
-- XML serialization preserves HWPX namespace prefixes (`hp`, `hs`, `hc`, `hh`)
-- Graceful fallback for non-standard container/manifest with warning handlers
+1. `batch index`로 JSONL 생성
+2. `text` 필드를 임베딩으로 변환
+3. `id/relativePath/sectionIndex/paragraphIndex`를 메타데이터로 벡터DB 저장
+4. 검색 결과를 원문 문서 위치로 역추적
 
-## For LLMs & AI Agents
+## 패키지
 
-- See [`llms.txt`](./llms.txt) for a concise, machine-readable API reference
-- See [`llms-full.txt`](./llms-full.txt) for complete API documentation
-- MCP server enables direct HWPX manipulation from Claude and other LLM agents
+| 패키지 | 설명 |
+|---|---|
+| `@reallygood83/hwpxcore` | HWPX 읽기/편집 핵심 라이브러리 |
+| `@reallygood83/hwpx-tools` | 변환/추출/인덱싱 유틸리티 |
+| `@reallygood83/hwpx-cli` | 터미널용 CLI |
+| `@reallygood83/hwpx-mcp` | MCP 서버 (AI 에이전트 연동) |
+| `@reallygood83/hwpxeditor` | React 기반 에디터 컴포넌트 |
 
-## Development
+## 개발자용 검증 명령
 
 ```bash
 pnpm install
 
-# Test, typecheck, build
-pnpm --filter @reallygood83/hwpxcore test
 pnpm --filter @reallygood83/hwpxcore typecheck
+pnpm --filter @reallygood83/hwpxcore test
 pnpm --filter @reallygood83/hwpxcore build
+
+pnpm --filter @reallygood83/hwpx-tools typecheck
+pnpm --filter @reallygood83/hwpx-tools build
+
+pnpm --filter @reallygood83/hwpx-cli typecheck
+pnpm --filter @reallygood83/hwpx-cli build
+
+pnpm --filter @reallygood83/hwpx-mcp typecheck
+pnpm --filter @reallygood83/hwpx-mcp build
 ```
 
-## License
+## 트러블슈팅
 
-Non-Commercial License. See [LICENSE](./LICENSE) for details.
+- GitHub Pages 배포 실패(404) 시: 저장소 `Settings -> Pages`에서 Pages를 먼저 활성화하세요.
+- `Cannot find module '@reallygood83/...` 오류: 루트에서 `pnpm install` 후 해당 의존 패키지부터 빌드하세요.
+- HWP 변환 품질 이슈: `hwp-to-hwpx`는 best-effort입니다. 원본 레이아웃 100% 보장을 목표로 하지 않습니다.
 
----
+## 라이선스
 
-If hwpx-ts is useful to you, please consider giving it a star on GitHub!
+Non-Commercial License. 자세한 내용은 `LICENSE`를 참고하세요.

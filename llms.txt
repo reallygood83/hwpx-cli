@@ -117,6 +117,7 @@ Available MCP tools:
 - `hwpx_export`: export as `md` or `txt`
 - `hwpx_extract_xml`: extract internal XML part
 - `hwpx_info`: return structure metadata
+- `hwpx_batch_index`: index one or many HWPX files for AI/RAG pipelines
 
 Claude Desktop config snippet:
 

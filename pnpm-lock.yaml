@@ -101,6 +101,9 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.0.0
         version: 1.26.0(zod@3.25.76)
+      '@reallygood83/hwpx-tools':
+        specifier: workspace:*
+        version: link:../hwpx-tools
       '@reallygood83/hwpxcore':
         specifier: workspace:*
         version: link:../hwpx-core

@@ -12,6 +12,7 @@
  * - `hwpx_export` - Export HWPX to Markdown or plain text format
  * - `hwpx_extract_xml` - Extract internal XML parts from the HWPX package
  * - `hwpx_info` - Get metadata and structure information about an HWPX file
+ * - `hwpx_batch_index` - Index multiple HWPX files for AI/RAG workflows
  *
  * ## Usage
  *
