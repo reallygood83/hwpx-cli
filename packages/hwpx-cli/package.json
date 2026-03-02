@@ -30,7 +30,7 @@
     "document"
   ],
   "author": "reallygood83",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "dependencies": {
     "@reallygood83/hwpx-tools": "workspace:*",
     "commander": "^12.0.0"

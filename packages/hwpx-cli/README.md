@@ -29,6 +29,7 @@ hwpxtool hwp-to-hwpx <file>
 hwpxtool extract <file> <part>
 hwpxtool info <file>
 hwpxtool batch index <input>
+hwpxtool mcp-config [options]
 ```
 
 ## 빠른 실전 예시
@@ -132,6 +133,30 @@ hwpxtool batch index ./hwpx-folder --schema
 2. `text` 필드 임베딩 생성
 3. `id`, `relativePath`, `sectionIndex`, `paragraphIndex`를 메타데이터로 저장
 4. 검색 결과를 원문 문서 위치와 매핑
+
+## OpenClaw 최적화 사용법
+
+OpenClaw에서 바로 사용하려면 MCP 설정을 자동 생성하세요.
+
+```bash
+# 전역 설정 (~/.openclaw/settings.json)
+hwpxtool mcp-config --target openclaw --global
+
+# 프로젝트 설정 (./.openclaw-mcp.json)
+hwpxtool mcp-config --target openclaw --project
+```
+
+설정 파일에 쓰지 않고 JSON 스니펫만 출력하려면:
+
+```bash
+hwpxtool mcp-config --target openclaw --print
+```
+
+OpenClaw 자동화 품질을 높이려면:
+
+1. 인덱싱은 `--json`으로 실행해 요약 파싱을 안정화
+2. 대용량 폴더는 `--incremental` + `--state-path` 조합 사용
+3. 에이전트 파이프라인은 `--schema` 출력으로 필드 계약 고정
 
 ## 종료 코드
 

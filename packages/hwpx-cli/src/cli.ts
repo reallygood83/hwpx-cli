@@ -628,9 +628,12 @@ export function createProgram(): Command {
   // mcp-config command
   program
     .command("mcp-config")
-    .description("Configure hwpx MCP server for Claude Code")
+    .description("Configure hwpx MCP server for Claude Code or OpenClaw")
     .option("-g, --global", "Configure globally (default)", true)
     .option("-p, --project", "Configure for current project only")
+    .option("-t, --target <client>", "MCP client target: claude or openclaw", "claude")
+    .option("--config-path <path>", "Custom MCP config file path")
+    .option("--print", "Print JSON config without writing files")
     .option("-l, --list", "List configured MCP servers")
     .option("-r, --remove", "Remove hwpx from MCP configuration")
     .action((options: McpConfigOptions) => {

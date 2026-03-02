@@ -70,6 +70,18 @@ Claude Desktop / Claude Code 설정 예시:
 }
 ```
 
+OpenClaw 설정 예시:
+
+```bash
+hwpxtool mcp-config --target openclaw --global
+```
+
+설정 파일을 직접 쓰지 않고 JSON만 출력하려면:
+
+```bash
+hwpxtool mcp-config --target openclaw --print
+```
+
 ## 실무 시나리오: 폴더 전체 인덱싱(RAG 입력 생성)
 
 여러 `.hwpx` 파일을 모아둔 폴더를 바로 인덱싱할 수 있습니다.
@@ -168,4 +180,4 @@ pnpm --filter @reallygood83/hwpx-mcp build
 
 ## 라이선스
 
-Non-Commercial License. 자세한 내용은 `LICENSE`를 참고하세요.
+Apache License 2.0. 자세한 내용은 `LICENSE`를 참고하세요.

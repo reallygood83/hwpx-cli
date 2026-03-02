@@ -267,4 +267,4 @@ export function MyComponent() {
 
 ## 라이선스
 
-MIT License
+Apache License 2.0

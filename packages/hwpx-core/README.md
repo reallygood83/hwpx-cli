@@ -162,4 +162,4 @@ doc.addImage(imageData, {
 
 ## 라이선스
 
-MIT License
+Apache License 2.0
