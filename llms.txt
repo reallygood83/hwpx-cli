@@ -1,0 +1,149 @@
+# hwpx-ts LLM Guide
+
+This file is a concise, LLM-friendly reference for using this repository.
+
+## Repository Purpose
+
+`hwpx-ts` is a TypeScript monorepo for HWPX document workflows:
+
+- Parse and edit HWPX (`@reallygood83/hwpxcore`)
+- Render/edit in React (`@reallygood83/hwpxeditor`)
+- Expose HWPX tools through MCP (`@reallygood83/hwpx-mcp`)
+
+## Primary Package: @reallygood83/hwpxcore
+
+Install:
+
+```bash
+npm install @reallygood83/hwpxcore
+```
+
+Basic import:
+
+```ts
+import { HwpxDocument, HwpxPackage, TextExtractor } from "@reallygood83/hwpxcore";
+```
+
+### Core APIs
+
+Open and save:
+
+```ts
+const doc = await HwpxDocument.open(hwpxBytes);
+const out1 = await doc.save();          // Uint8Array
+const out2 = await doc.saveToBuffer();  // Uint8Array
+const blob = await doc.saveToBlob();    // Blob
+await doc.saveToPath("./out.hwpx");    // Node.js path
+```
+
+Read/modify content:
+
+```ts
+doc.sections;
+doc.paragraphs;
+doc.text;
+
+doc.addParagraph("new paragraph");
+doc.insertParagraphAt(0, 0, "inserted");
+doc.removeParagraph(0, 0);
+doc.replaceText("old", "new");
+```
+
+Structured objects:
+
+```ts
+doc.tables;
+doc.headers;
+doc.memos;
+```
+
+Formatting helpers:
+
+```ts
+const charPrId = doc.ensureRunStyle({ bold: true, fontSize: 12 });
+const paraPrId = doc.ensureParaStyle({ alignment: "center" });
+```
+
+Image/equation insertion:
+
+```ts
+doc.addImage(imageBytes, {
+  mediaType: "image/png",
+  widthMm: 100,
+  heightMm: 80,
+});
+
+doc.addEquation("E=mc^2");
+```
+
+Version/metadata/lifecycle:
+
+```ts
+doc.libraryVersion;
+doc.documentVersionInfo;
+doc.closed;
+doc.close();
+```
+
+Low-level package APIs:
+
+```ts
+const pkg = await HwpxPackage.open(hwpxBytes);
+pkg.partNames();
+pkg.getPart("Contents/header.xml");
+pkg.rootfiles();
+pkg.mainRootFile();
+pkg.versionPath();
+pkg.close();
+```
+
+### Compatibility Notes
+
+- ZIP save writes `mimetype` as first entry with `STORE` compression.
+- XML serialization prefers HWPX prefixes (`hp`, `hs`, `hc`, `hh`).
+- Package fallback warnings can be captured via `HwpxPackage.setWarningHandler(...)`.
+
+## MCP Package: @reallygood83/hwpx-mcp
+
+Run server:
+
+```bash
+npx @reallygood83/hwpx-mcp
+```
+
+Available MCP tools:
+
+- `hwpx_read`: extract plain text
+- `hwpx_export`: export as `md` or `txt`
+- `hwpx_extract_xml`: extract internal XML part
+- `hwpx_info`: return structure metadata
+
+Claude Desktop config snippet:
+
+```json
+{
+  "mcpServers": {
+    "hwpx": {
+      "command": "npx",
+      "args": ["@reallygood83/hwpx-mcp"]
+    }
+  }
+}
+```
+
+## Safe Usage Patterns for Agents
+
+- Prefer `saveToBuffer()` in generic environments.
+- Use `saveToPath()` only in Node.js runtime with filesystem access.
+- Call `doc.close()`/`pkg.close()` when done in long-running processes.
+- Handle missing/non-standard parts gracefully; fallback warnings are informative.
+
+## Development Commands (Repo)
+
+```bash
+pnpm --filter @reallygood83/hwpxcore test
+pnpm --filter @reallygood83/hwpxcore typecheck
+pnpm --filter @reallygood83/hwpxcore build
+pnpm --filter @reallygood83/hwpx-tools test
+pnpm --filter @reallygood83/hwpx-mcp exec vitest run --passWithNoTests
+```

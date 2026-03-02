@@ -1,0 +1,884 @@
+/**
+ * Paragraph and Run OXML classes: HwpxOxmlRun, HwpxOxmlParagraph.
+ */
+
+import { childElements } from "../xml/dom.js";
+import { HC_NS } from "./schema.js";
+import type { RunStyle } from "./types.js";
+import type { HwpxOxmlSection } from "./section.js";
+import { HwpxOxmlTable, type HwpxMargin } from "./table.js";
+import {
+  HP_NS,
+  objectId,
+  paragraphId,
+  DEFAULT_PARAGRAPH_ATTRS,
+  elementLocalName,
+  findChild,
+  findAllChildren,
+  findAllDescendants,
+  createNsElement,
+  subElement,
+} from "./xml-utils.js";
+
+// -- HwpxOxmlRun --
+
+export class HwpxOxmlRun {
+  element: Element;
+  paragraph: HwpxOxmlParagraph;
+
+  constructor(element: Element, paragraph: HwpxOxmlParagraph) {
+    this.element = element;
+    this.paragraph = paragraph;
+  }
+
+  get charPrIdRef(): string | null {
+    return this.element.getAttribute("charPrIDRef");
+  }
+
+  set charPrIdRef(value: string | number | null) {
+    if (value == null) {
+      if (this.element.hasAttribute("charPrIDRef")) {
+        this.element.removeAttribute("charPrIDRef");
+        this.paragraph.section.markDirty();
+      }
+      return;
+    }
+    const newValue = String(value);
+    if (this.element.getAttribute("charPrIDRef") !== newValue) {
+      this.element.setAttribute("charPrIDRef", newValue);
+      this.paragraph.section.markDirty();
+    }
+  }
+
+  get text(): string {
+    const parts: string[] = [];
+    for (const node of findAllChildren(this.element, HP_NS, "t")) {
+      if (node.textContent) parts.push(node.textContent);
+    }
+    return parts.join("");
+  }
+
+  set text(value: string) {
+    const primary = this._ensurePlainTextNode();
+    const changed = (primary.textContent ?? "") !== value;
+    primary.textContent = value;
+    const plainNodes = this._plainTextNodes();
+    for (let i = 1; i < plainNodes.length; i++) {
+      if (plainNodes[i]!.textContent) {
+        plainNodes[i]!.textContent = "";
+      }
+    }
+    if (changed) this.paragraph.section.markDirty();
+  }
+
+  get style(): RunStyle | null {
+    const document = this.paragraph.section.document;
+    if (!document) return null;
+    const charPrId = this.charPrIdRef;
+    if (!charPrId) return null;
+    return document.charProperty(charPrId);
+  }
+
+  replaceText(search: string, replacement: string, count?: number): number {
+    if (!search) throw new Error("search text must be a non-empty string");
+    if (count != null && count <= 0) return 0;
+
+    let totalReplacements = 0;
+    let remaining = count ?? Infinity;
+
+    for (const textNode of findAllChildren(this.element, HP_NS, "t")) {
+      if (remaining <= 0) break;
+      let content = textNode.textContent ?? "";
+      let replacedCount = 0;
+      let result = "";
+      let searchStart = 0;
+
+      while (remaining > 0) {
+        const pos = content.indexOf(search, searchStart);
+        if (pos === -1) {
+          result += content.substring(searchStart);
+          break;
+        }
+        result += content.substring(searchStart, pos) + replacement;
+        searchStart = pos + search.length;
+        replacedCount++;
+        remaining--;
+      }
+      if (searchStart < content.length && remaining <= 0) {
+        result += content.substring(searchStart);
+      }
+
+      if (replacedCount > 0) {
+        textNode.textContent = result;
+        totalReplacements += replacedCount;
+      }
+    }
+
+    if (totalReplacements > 0) this.paragraph.section.markDirty();
+    return totalReplacements;
+  }
+
+  remove(): void {
+    try {
+      this.paragraph.element.removeChild(this.element);
+    } catch { return; }
+    this.paragraph.section.markDirty();
+  }
+
+  private _plainTextNodes(): Element[] {
+    return findAllChildren(this.element, HP_NS, "t").filter(
+      (n) => childElements(n).length === 0,
+    );
+  }
+
+  private _ensurePlainTextNode(): Element {
+    const nodes = this._plainTextNodes();
+    if (nodes.length > 0) return nodes[0]!;
+    return subElement(this.element, HP_NS, "t");
+  }
+}
+
+// -- HwpxOxmlParagraph --
+
+export class HwpxOxmlParagraph {
+  element: Element;
+  section: HwpxOxmlSection;
+
+  constructor(element: Element, section: HwpxOxmlSection) {
+    this.element = element;
+    this.section = section;
+  }
+
+  get runs(): HwpxOxmlRun[] {
+    return findAllChildren(this.element, HP_NS, "run").map((el) => new HwpxOxmlRun(el, this));
+  }
+
+  get text(): string {
+    const parts: string[] = [];
+    for (const el of findAllDescendants(this.element, "t")) {
+      if (el.textContent) parts.push(el.textContent);
+    }
+    return parts.join("");
+  }
+
+  set text(value: string) {
+    for (const run of findAllChildren(this.element, HP_NS, "run")) {
+      for (const child of findAllChildren(run, HP_NS, "t")) {
+        run.removeChild(child);
+      }
+    }
+    const run = this._ensureRun();
+    const t = subElement(run, HP_NS, "t");
+    t.textContent = value;
+    this.section.markDirty();
+  }
+
+  get tables(): HwpxOxmlTable[] {
+    const tables: HwpxOxmlTable[] = [];
+    for (const run of findAllChildren(this.element, HP_NS, "run")) {
+      for (const child of childElements(run)) {
+        if (elementLocalName(child) === "tbl") tables.push(new HwpxOxmlTable(child, this));
+      }
+    }
+    return tables;
+  }
+
+  get paraPrIdRef(): string | null {
+    return this.element.getAttribute("paraPrIDRef");
+  }
+
+  set paraPrIdRef(value: string | number | null) {
+    if (value == null) {
+      if (this.element.hasAttribute("paraPrIDRef")) {
+        this.element.removeAttribute("paraPrIDRef");
+        this.section.markDirty();
+      }
+      return;
+    }
+    const newValue = String(value);
+    if (this.element.getAttribute("paraPrIDRef") !== newValue) {
+      this.element.setAttribute("paraPrIDRef", newValue);
+      this.section.markDirty();
+    }
+  }
+
+  /** Whether this paragraph forces a column break before it. */
+  get columnBreak(): boolean {
+    return this.element.getAttribute("columnBreak") === "1";
+  }
+
+  set columnBreak(value: boolean) {
+    const newValue = value ? "1" : "0";
+    if (this.element.getAttribute("columnBreak") !== newValue) {
+      this.element.setAttribute("columnBreak", newValue);
+      this.section.markDirty();
+    }
+  }
+
+  /** Whether this paragraph forces a page break before it. */
+  get pageBreak(): boolean {
+    return this.element.getAttribute("pageBreak") === "1";
+  }
+
+  set pageBreak(value: boolean) {
+    const newValue = value ? "1" : "0";
+    if (this.element.getAttribute("pageBreak") !== newValue) {
+      this.element.setAttribute("pageBreak", newValue);
+      this.section.markDirty();
+    }
+  }
+
+  get styleIdRef(): string | null {
+    return this.element.getAttribute("styleIDRef");
+  }
+
+  set styleIdRef(value: string | number | null) {
+    if (value == null) {
+      if (this.element.hasAttribute("styleIDRef")) {
+        this.element.removeAttribute("styleIDRef");
+        this.section.markDirty();
+      }
+      return;
+    }
+    const newValue = String(value);
+    if (this.element.getAttribute("styleIDRef") !== newValue) {
+      this.element.setAttribute("styleIDRef", newValue);
+      this.section.markDirty();
+    }
+  }
+
+  /** Get the bullet ID reference for list formatting. */
+  get bulletIdRef(): string | null {
+    return this.element.getAttribute("bulletIDRef");
+  }
+
+  /** Set the bullet ID reference for list formatting. */
+  set bulletIdRef(value: string | number | null) {
+    if (value == null) {
+      if (this.element.hasAttribute("bulletIDRef")) {
+        this.element.removeAttribute("bulletIDRef");
+        this.section.markDirty();
+      }
+      return;
+    }
+    const newValue = String(value);
+    if (this.element.getAttribute("bulletIDRef") !== newValue) {
+      this.element.setAttribute("bulletIDRef", newValue);
+      this.section.markDirty();
+    }
+  }
+
+  /** Get the outline level for numbered list (1-9, or 0 for no outline). */
+  get outlineLevel(): number {
+    const val = this.element.getAttribute("outlineLevel");
+    return val ? parseInt(val, 10) : 0;
+  }
+
+  /** Set the outline level for numbered list. */
+  set outlineLevel(value: number) {
+    const newValue = String(Math.max(0, Math.min(9, value)));
+    if (this.element.getAttribute("outlineLevel") !== newValue) {
+      this.element.setAttribute("outlineLevel", newValue);
+      this.section.markDirty();
+    }
+  }
+
+  get charPrIdRef(): string | null {
+    const values = new Set<string>();
+    for (const run of findAllChildren(this.element, HP_NS, "run")) {
+      const v = run.getAttribute("charPrIDRef");
+      if (v != null) values.add(v);
+    }
+    if (values.size === 0) return null;
+    if (values.size === 1) return values.values().next().value!;
+    return null;
+  }
+
+  set charPrIdRef(value: string | number | null) {
+    const newValue = value == null ? null : String(value);
+    let runs = findAllChildren(this.element, HP_NS, "run");
+    if (runs.length === 0) runs = [this._ensureRun()];
+    let changed = false;
+    for (const run of runs) {
+      if (newValue == null) {
+        if (run.hasAttribute("charPrIDRef")) { run.removeAttribute("charPrIDRef"); changed = true; }
+      } else {
+        if (run.getAttribute("charPrIDRef") !== newValue) { run.setAttribute("charPrIDRef", newValue); changed = true; }
+      }
+    }
+    if (changed) this.section.markDirty();
+  }
+
+  addRun(text: string = "", opts?: { charPrIdRef?: string | number; attributes?: Record<string, string> }): HwpxOxmlRun {
+    const runAttrs: Record<string, string> = { ...(opts?.attributes ?? {}) };
+    if (!("charPrIDRef" in runAttrs)) {
+      if (opts?.charPrIdRef != null) {
+        runAttrs["charPrIDRef"] = String(opts.charPrIdRef);
+      } else {
+        runAttrs["charPrIDRef"] = this.charPrIdRef ?? "0";
+      }
+    }
+    const runElement = subElement(this.element, HP_NS, "run", runAttrs);
+    const t = subElement(runElement, HP_NS, "t");
+    t.textContent = text;
+    this.section.markDirty();
+    return new HwpxOxmlRun(runElement, this);
+  }
+
+  /** Insert a tab character at the end of the paragraph. */
+  addTab(opts?: {
+    charPrIdRef?: string | number;
+    /** Tab position in hwpUnit (optional, defaults to auto-position) */
+    width?: number;
+    /** Tab leader style for TOC entries: "DOT" | "HYPHEN" | "UNDERLINE" | "NONE" */
+    tabLeader?: "DOT" | "HYPHEN" | "UNDERLINE" | "NONE";
+  }): void {
+    const charPrId = opts?.charPrIdRef ?? this.charPrIdRef ?? "0";
+    const runAttrs: Record<string, string> = { charPrIDRef: String(charPrId) };
+    const tabAttrs: Record<string, string> = {};
+
+    if (opts?.width != null) {
+      tabAttrs.width = String(opts.width);
+    }
+    if (opts?.tabLeader != null && opts.tabLeader !== "NONE") {
+      tabAttrs.tabLeader = opts.tabLeader;
+    }
+
+    const runElement = subElement(this.element, HP_NS, "run", runAttrs);
+    subElement(runElement, HP_NS, "tab", tabAttrs);
+    this.section.markDirty();
+  }
+
+  addTable(rows: number, cols: number, opts?: { width?: number; height?: number; borderFillIdRef?: string | number }): HwpxOxmlTable {
+    let borderFillIdRef = opts?.borderFillIdRef;
+    if (borderFillIdRef == null) {
+      const document = this.section.document;
+      if (document) borderFillIdRef = document.ensureBasicBorderFill();
+      else borderFillIdRef = "0";
+    }
+    const doc = this.element.ownerDocument!;
+    const run = subElement(this.element, HP_NS, "run", { charPrIDRef: this.charPrIdRef ?? "0" });
+    const tableElement = HwpxOxmlTable.create(doc, rows, cols, {
+      width: opts?.width, height: opts?.height, borderFillIdRef,
+    });
+    run.appendChild(tableElement);
+    this.section.markDirty();
+    return new HwpxOxmlTable(tableElement, this);
+  }
+
+  /**
+   * Add a picture (image) element to this paragraph.
+   * @param binaryItemIdRef - The binary item ID returned by HwpxPackage.addBinaryItem()
+   * @param opts - width/height in hwpUnits (7200 = 1 inch). Use mmToHwp() to convert from mm.
+   */
+  addPicture(binaryItemIdRef: string, opts: {
+    width: number;
+    height: number;
+    textWrap?: string;
+    treatAsChar?: boolean;
+  }): Element {
+    const doc = this.element.ownerDocument!;
+    const width = Math.max(opts.width, 1);
+    const height = Math.max(opts.height, 1);
+    const textWrap = opts.textWrap ?? "TOP_AND_BOTTOM";
+    const treatAsChar = opts.treatAsChar !== false ? "1" : "0";
+
+    const run = subElement(this.element, HP_NS, "run", { charPrIDRef: this.charPrIdRef ?? "0" });
+
+    const pic = createNsElement(doc, HP_NS, "pic", {
+      id: objectId(),
+      zOrder: "0",
+      numberingType: "PICTURE",
+      textWrap,
+      textFlow: "BOTH_SIDES",
+      lock: "0",
+      dropcapstyle: "None",
+      href: "",
+      groupLevel: "0",
+      instid: objectId(),
+      reverse: "0",
+    });
+    run.appendChild(pic);
+
+    subElement(pic, HP_NS, "offset", { x: "0", y: "0" });
+    subElement(pic, HP_NS, "orgSz", { width: String(width), height: String(height) });
+    subElement(pic, HP_NS, "curSz", { width: String(width), height: String(height) });
+    subElement(pic, HP_NS, "flip", { horizontal: "0", vertical: "0" });
+    subElement(pic, HP_NS, "rotationInfo", {
+      angle: "0",
+      centerX: String(Math.floor(width / 2)),
+      centerY: String(Math.floor(height / 2)),
+      rotateimage: "1",
+    });
+
+    // renderingInfo with identity matrices
+    const renderingInfo = subElement(pic, HP_NS, "renderingInfo");
+    createNsElement(doc, HC_NS, "transMatrix", { e1: "1", e2: "0", e3: "0", e4: "0", e5: "1", e6: "0" });
+    renderingInfo.appendChild(createNsElement(doc, HC_NS, "transMatrix", { e1: "1", e2: "0", e3: "0", e4: "0", e5: "1", e6: "0" }));
+    renderingInfo.appendChild(createNsElement(doc, HC_NS, "scaMatrix", { e1: "1", e2: "0", e3: "0", e4: "0", e5: "1", e6: "0" }));
+    renderingInfo.appendChild(createNsElement(doc, HC_NS, "rotMatrix", { e1: "1", e2: "0", e3: "0", e4: "0", e5: "1", e6: "0" }));
+
+    // img reference
+    const img = createNsElement(doc, HC_NS, "img", {
+      binaryItemIDRef: binaryItemIdRef,
+      bright: "0",
+      contrast: "0",
+      effect: "REAL_PIC",
+      alpha: "0",
+    });
+    pic.appendChild(img);
+
+    // imgRect (4 corner points)
+    const imgRect = subElement(pic, HP_NS, "imgRect");
+    imgRect.appendChild(createNsElement(doc, HC_NS, "pt0", { x: "0", y: "0" }));
+    imgRect.appendChild(createNsElement(doc, HC_NS, "pt1", { x: String(width), y: "0" }));
+    imgRect.appendChild(createNsElement(doc, HC_NS, "pt2", { x: String(width), y: String(height) }));
+    imgRect.appendChild(createNsElement(doc, HC_NS, "pt3", { x: "0", y: String(height) }));
+
+    subElement(pic, HP_NS, "imgClip", { left: "0", right: String(width), top: "0", bottom: String(height) });
+    subElement(pic, HP_NS, "inMargin", { left: "0", right: "0", top: "0", bottom: "0" });
+    subElement(pic, HP_NS, "imgDim", { dimwidth: String(width), dimheight: String(height) });
+    subElement(pic, HP_NS, "effects");
+    subElement(pic, HP_NS, "sz", {
+      width: String(width), widthRelTo: "ABSOLUTE",
+      height: String(height), heightRelTo: "ABSOLUTE", protect: "0",
+    });
+    subElement(pic, HP_NS, "pos", {
+      treatAsChar, affectLSpacing: "0", flowWithText: "1", allowOverlap: "0",
+      holdAnchorAndSO: "0", vertRelTo: "PARA", horzRelTo: "COLUMN",
+      vertAlign: "TOP", horzAlign: "LEFT", vertOffset: "0", horzOffset: "0",
+    });
+    subElement(pic, HP_NS, "outMargin", { left: "0", right: "0", top: "0", bottom: "0" });
+
+    this.section.markDirty();
+    return pic;
+  }
+
+  /** Return all <pic> elements across all runs. */
+  get pictures(): Element[] {
+    const pics: Element[] = [];
+    for (const run of findAllChildren(this.element, HP_NS, "run")) {
+      for (const child of childElements(run)) {
+        if (elementLocalName(child) === "pic") pics.push(child);
+      }
+    }
+    return pics;
+  }
+
+  /**
+   * Set the size of a picture element (by index) in hwpUnits.
+   * Updates curSz, sz, imgRect, imgClip, imgDim, and rotationInfo.
+   */
+  setPictureSize(pictureIndex: number, width: number, height: number): void {
+    const pics = this.pictures;
+    const pic = pics[pictureIndex];
+    if (!pic) return;
+    const w = Math.max(width, 1);
+    const h = Math.max(height, 1);
+
+    // Update curSz
+    const curSz = findChild(pic, HP_NS, "curSz");
+    if (curSz) { curSz.setAttribute("width", String(w)); curSz.setAttribute("height", String(h)); }
+
+    // Update sz
+    const sz = findChild(pic, HP_NS, "sz");
+    if (sz) { sz.setAttribute("width", String(w)); sz.setAttribute("height", String(h)); }
+
+    // Update imgRect corner points
+    const imgRect = findChild(pic, HP_NS, "imgRect");
+    if (imgRect) {
+      const pts = childElements(imgRect);
+      if (pts[0]) { pts[0].setAttribute("x", "0"); pts[0].setAttribute("y", "0"); }
+      if (pts[1]) { pts[1].setAttribute("x", String(w)); pts[1].setAttribute("y", "0"); }
+      if (pts[2]) { pts[2].setAttribute("x", String(w)); pts[2].setAttribute("y", String(h)); }
+      if (pts[3]) { pts[3].setAttribute("x", "0"); pts[3].setAttribute("y", String(h)); }
+    }
+
+    // Update imgClip
+    const imgClip = findChild(pic, HP_NS, "imgClip");
+    if (imgClip) { imgClip.setAttribute("right", String(w)); imgClip.setAttribute("bottom", String(h)); }
+
+    // Update imgDim
+    const imgDim = findChild(pic, HP_NS, "imgDim");
+    if (imgDim) { imgDim.setAttribute("dimwidth", String(w)); imgDim.setAttribute("dimheight", String(h)); }
+
+    // Update rotationInfo center
+    const rotInfo = findChild(pic, HP_NS, "rotationInfo");
+    if (rotInfo) {
+      rotInfo.setAttribute("centerX", String(Math.floor(w / 2)));
+      rotInfo.setAttribute("centerY", String(Math.floor(h / 2)));
+    }
+
+    this.section.markDirty();
+  }
+
+  /** Get picture outer margin by index. */
+  getPictureOutMargin(pictureIndex: number): HwpxMargin {
+    const pic = this.pictures[pictureIndex];
+    if (!pic) return { top: 0, bottom: 0, left: 0, right: 0 };
+    const el = findChild(pic, HP_NS, "outMargin");
+    if (!el) return { top: 0, bottom: 0, left: 0, right: 0 };
+    return {
+      top: parseInt(el.getAttribute("top") ?? "0", 10),
+      bottom: parseInt(el.getAttribute("bottom") ?? "0", 10),
+      left: parseInt(el.getAttribute("left") ?? "0", 10),
+      right: parseInt(el.getAttribute("right") ?? "0", 10),
+    };
+  }
+
+  /** Set picture outer margin by index. */
+  setPictureOutMargin(pictureIndex: number, margin: Partial<HwpxMargin>): void {
+    const pic = this.pictures[pictureIndex];
+    if (!pic) return;
+    let el = findChild(pic, HP_NS, "outMargin");
+    if (!el) el = subElement(pic, HP_NS, "outMargin", { left: "0", right: "0", top: "0", bottom: "0" });
+    if (margin.top != null) el.setAttribute("top", String(Math.max(margin.top, 0)));
+    if (margin.bottom != null) el.setAttribute("bottom", String(Math.max(margin.bottom, 0)));
+    if (margin.left != null) el.setAttribute("left", String(Math.max(margin.left, 0)));
+    if (margin.right != null) el.setAttribute("right", String(Math.max(margin.right, 0)));
+    this.section.markDirty();
+  }
+
+  /** Get picture inner margin by index. */
+  getPictureInMargin(pictureIndex: number): HwpxMargin {
+    const pic = this.pictures[pictureIndex];
+    if (!pic) return { top: 0, bottom: 0, left: 0, right: 0 };
+    const el = findChild(pic, HP_NS, "inMargin");
+    if (!el) return { top: 0, bottom: 0, left: 0, right: 0 };
+    return {
+      top: parseInt(el.getAttribute("top") ?? "0", 10),
+      bottom: parseInt(el.getAttribute("bottom") ?? "0", 10),
+      left: parseInt(el.getAttribute("left") ?? "0", 10),
+      right: parseInt(el.getAttribute("right") ?? "0", 10),
+    };
+  }
+
+  /** Set picture inner margin by index. */
+  setPictureInMargin(pictureIndex: number, margin: Partial<HwpxMargin>): void {
+    const pic = this.pictures[pictureIndex];
+    if (!pic) return;
+    let el = findChild(pic, HP_NS, "inMargin");
+    if (!el) el = subElement(pic, HP_NS, "inMargin", { left: "0", right: "0", top: "0", bottom: "0" });
+    if (margin.top != null) el.setAttribute("top", String(Math.max(margin.top, 0)));
+    if (margin.bottom != null) el.setAttribute("bottom", String(Math.max(margin.bottom, 0)));
+    if (margin.left != null) el.setAttribute("left", String(Math.max(margin.left, 0)));
+    if (margin.right != null) el.setAttribute("right", String(Math.max(margin.right, 0)));
+    this.section.markDirty();
+  }
+
+  /**
+   * Add an equation element to this paragraph.
+   * The script uses HWP equation scripting language (e.g. "rmCH _{3} COOH").
+   *
+   * @param script - HWP equation script text
+   * @param opts - Optional configuration:
+   *   - width/height in hwpUnits (estimated size; Hangul recalculates on open)
+   *   - textColor: equation text color (default "#000000")
+   *   - font: equation font (default "HancomEQN")
+   *   - baseUnit: base unit size (default 1000)
+   *   - baseLine: baseline percentage (default 85)
+   *   - charPrIdRef: character property ID for the enclosing run
+   */
+  addEquation(script: string, opts?: {
+    width?: number;
+    height?: number;
+    textColor?: string;
+    font?: string;
+    baseUnit?: number;
+    baseLine?: number;
+    charPrIdRef?: string | number;
+  }): Element {
+    const doc = this.element.ownerDocument!;
+    const width = opts?.width ?? 3000;
+    const height = opts?.height ?? 1100;
+    const textColor = opts?.textColor ?? "#000000";
+    const font = opts?.font ?? "HancomEQN";
+    const baseUnit = opts?.baseUnit ?? 1000;
+    const baseLine = opts?.baseLine ?? 85;
+
+    const runCharPrId = opts?.charPrIdRef != null ? String(opts.charPrIdRef) : (this.charPrIdRef ?? "0");
+    const run = subElement(this.element, HP_NS, "run", { charPrIDRef: runCharPrId });
+
+    const eq = createNsElement(doc, HP_NS, "equation", {
+      id: objectId(),
+      zOrder: "0",
+      numberingType: "EQUATION",
+      textWrap: "TOP_AND_BOTTOM",
+      textFlow: "BOTH_SIDES",
+      lock: "0",
+      dropcapstyle: "None",
+      version: "Equation Version 60",
+      baseLine: String(baseLine),
+      textColor,
+      baseUnit: String(baseUnit),
+      lineMode: "CHAR",
+      font,
+    });
+    run.appendChild(eq);
+
+    subElement(eq, HP_NS, "sz", {
+      width: String(width), widthRelTo: "ABSOLUTE",
+      height: String(height), heightRelTo: "ABSOLUTE",
+      protect: "0",
+    });
+    subElement(eq, HP_NS, "pos", {
+      treatAsChar: "1", affectLSpacing: "0", flowWithText: "1",
+      allowOverlap: "0", holdAnchorAndSO: "0",
+      vertRelTo: "PARA", horzRelTo: "PARA",
+      vertAlign: "TOP", horzAlign: "LEFT",
+      vertOffset: "0", horzOffset: "0",
+    });
+    subElement(eq, HP_NS, "outMargin", { left: "56", right: "56", top: "0", bottom: "0" });
+
+    const commentEl = subElement(eq, HP_NS, "shapeComment");
+    commentEl.textContent = "수식입니다.";
+
+    const scriptEl = subElement(eq, HP_NS, "script");
+    // Preserve whitespace for multiline scripts (those using # for line breaks)
+    if (script.includes("#") || script.includes("\n")) {
+      scriptEl.setAttribute("xml:space", "preserve");
+    }
+    scriptEl.textContent = script;
+
+    this.section.markDirty();
+    return eq;
+  }
+
+  /** Return all <equation> elements across all runs. */
+  get equations(): Element[] {
+    const eqs: Element[] = [];
+    for (const run of findAllChildren(this.element, HP_NS, "run")) {
+      for (const child of childElements(run)) {
+        if (elementLocalName(child) === "equation") eqs.push(child);
+      }
+    }
+    return eqs;
+  }
+
+  /**
+   * Add a text box (drawText) element to this paragraph.
+   * @param text - The text content of the text box
+   * @param opts - width/height in hwpUnits
+   */
+  addTextBox(text: string, opts: {
+    width: number;
+    height: number;
+    x?: number;
+    y?: number;
+    textWrap?: string;
+    borderColor?: string;
+    fillColor?: string;
+    charPrIdRef?: string | number;
+  }): Element {
+    const doc = this.element.ownerDocument!;
+    const width = Math.max(opts.width, 1);
+    const height = Math.max(opts.height, 1);
+    const x = opts.x ?? 0;
+    const y = opts.y ?? 0;
+    const textWrap = opts.textWrap ?? "SQUARE";
+    const borderColor = opts.borderColor ?? "#000000";
+    const fillColor = opts.fillColor ?? "#FFFFFF";
+
+    const runCharPrId = opts.charPrIdRef != null ? String(opts.charPrIdRef) : (this.charPrIdRef ?? "0");
+    const run = subElement(this.element, HP_NS, "run", { charPrIDRef: runCharPrId });
+
+    const drawText = createNsElement(doc, HP_NS, "drawText", {
+      id: objectId(),
+      zOrder: "0",
+      numberingType: "TEXTBOX",
+      textWrap,
+      textFlow: "BOTH_SIDES",
+      lock: "0",
+      dropcapstyle: "None",
+      editable: "1",
+      drawTextVerticalAlign: "TOP",
+    });
+    run.appendChild(drawText);
+
+    // Size element
+    subElement(drawText, HP_NS, "sz", {
+      width: String(width), widthRelTo: "ABSOLUTE",
+      height: String(height), heightRelTo: "ABSOLUTE",
+      protect: "0",
+    });
+
+    // Position element
+    subElement(drawText, HP_NS, "pos", {
+      treatAsChar: "0", affectLSpacing: "0", flowWithText: "1",
+      allowOverlap: "0", holdAnchorAndSO: "0",
+      vertRelTo: "PARA", horzRelTo: "COLUMN",
+      vertAlign: "TOP", horzAlign: "LEFT",
+      vertOffset: String(y), horzOffset: String(x),
+    });
+
+    // Outer margin
+    subElement(drawText, HP_NS, "outMargin", { left: "0", right: "0", top: "0", bottom: "0" });
+
+    // Line shape (border)
+    const lineShape = subElement(drawText, HP_NS, "lineShape", {
+      color: borderColor,
+      width: "0.12mm",
+      style: "SOLID",
+      endCap: "FLAT",
+      headStyle: "NORMAL",
+      tailStyle: "NORMAL",
+    });
+
+    // Fill color
+    const fillBrush = subElement(drawText, HP_NS, "fillBrush");
+    subElement(fillBrush, HC_NS, "winBrush", {
+      faceColor: fillColor,
+      hatchColor: "#FFFFFF",
+      alpha: "0",
+    });
+
+    // Text box content - add a sub-paragraph
+    const textMargin = subElement(drawText, HP_NS, "textMargin", { left: "100", right: "100", top: "100", bottom: "100" });
+    const subPara = createNsElement(doc, HP_NS, "p", DEFAULT_PARAGRAPH_ATTRS);
+    drawText.appendChild(subPara);
+    const subRun = subElement(subPara, HP_NS, "run", { charPrIDRef: runCharPrId });
+    const tEl = subElement(subRun, HP_NS, "t");
+    tEl.textContent = text;
+
+    this.section.markDirty();
+    return drawText;
+  }
+
+  /** Return all <drawText> (text box) elements across all runs. */
+  get textBoxes(): Element[] {
+    const boxes: Element[] = [];
+    for (const run of findAllChildren(this.element, HP_NS, "run")) {
+      for (const child of childElements(run)) {
+        if (elementLocalName(child) === "drawText") boxes.push(child);
+      }
+    }
+    return boxes;
+  }
+
+  /** Get text box size. */
+  getTextBoxSize(index: number): { width: number; height: number } {
+    const box = this.textBoxes[index];
+    if (!box) return { width: 0, height: 0 };
+    const sz = findChild(box, HP_NS, "sz");
+    if (!sz) return { width: 0, height: 0 };
+    return {
+      width: parseInt(sz.getAttribute("width") ?? "0", 10),
+      height: parseInt(sz.getAttribute("height") ?? "0", 10),
+    };
+  }
+
+  /** Set text box size. */
+  setTextBoxSize(index: number, width: number, height: number): void {
+    const box = this.textBoxes[index];
+    if (!box) return;
+    const sz = findChild(box, HP_NS, "sz");
+    if (sz) {
+      sz.setAttribute("width", String(Math.max(width, 1)));
+      sz.setAttribute("height", String(Math.max(height, 1)));
+    }
+    this.section.markDirty();
+  }
+
+  /** Get text box text content. */
+  getTextBoxText(index: number): string {
+    const box = this.textBoxes[index];
+    if (!box) return "";
+    const parts: string[] = [];
+    for (const t of findAllDescendants(box, "t")) {
+      if (t.textContent) parts.push(t.textContent);
+    }
+    return parts.join("");
+  }
+
+  /** Set text box text content. */
+  setTextBoxText(index: number, text: string): void {
+    const box = this.textBoxes[index];
+    if (!box) return;
+    // Find the first <t> element and update it
+    const tElements = findAllDescendants(box, "t");
+    if (tElements.length > 0) {
+      tElements[0]!.textContent = text;
+      // Clear other text elements
+      for (let i = 1; i < tElements.length; i++) {
+        tElements[i]!.textContent = "";
+      }
+    }
+    this.section.markDirty();
+  }
+
+  remove(): void {
+    const parent = this.element.parentNode;
+    if (!parent) return;
+    parent.removeChild(this.element);
+    this.section.markDirty();
+  }
+
+  /**
+   * Apply a character property to a specific text range.
+   * This will split runs as needed to apply formatting only to the selected range.
+   * @param startOffset - Start character offset (0-based)
+   * @param endOffset - End character offset (exclusive)
+   * @param charPrIdRef - The character property ID to apply
+   */
+  applyCharFormatToRange(startOffset: number, endOffset: number, charPrIdRef: string | number): void {
+    if (startOffset >= endOffset) return;
+
+    const runs = this.runs;
+    if (runs.length === 0) return;
+
+    // Build a flat list of characters with their run info
+    type CharInfo = { runIndex: number; localOffset: number; char: string };
+    const chars: CharInfo[] = [];
+    for (let ri = 0; ri < runs.length; ri++) {
+      const runText = runs[ri]!.text;
+      for (let ci = 0; ci < runText.length; ci++) {
+        chars.push({ runIndex: ri, localOffset: ci, char: runText[ci]! });
+      }
+    }
+
+    if (startOffset >= chars.length) return;
+    const actualEnd = Math.min(endOffset, chars.length);
+
+    // Collect the new run structure
+    type NewRun = { text: string; charPrIdRef: string | null };
+    const newRuns: NewRun[] = [];
+
+    // Before selection
+    if (startOffset > 0) {
+      const beforeText = chars.slice(0, startOffset).map(c => c.char).join("");
+      const beforeCharPr = runs[chars[0]!.runIndex]!.charPrIdRef;
+      newRuns.push({ text: beforeText, charPrIdRef: beforeCharPr });
+    }
+
+    // Selected range
+    const selectedText = chars.slice(startOffset, actualEnd).map(c => c.char).join("");
+    newRuns.push({ text: selectedText, charPrIdRef: String(charPrIdRef) });
+
+    // After selection
+    if (actualEnd < chars.length) {
+      const afterText = chars.slice(actualEnd).map(c => c.char).join("");
+      const afterCharPr = runs[chars[actualEnd]!.runIndex]!.charPrIdRef;
+      newRuns.push({ text: afterText, charPrIdRef: afterCharPr });
+    }
+
+    // Remove existing runs
+    for (const run of runs) {
+      run.remove();
+    }
+
+    // Create new runs
+    for (const nr of newRuns) {
+      if (nr.text) {
+        this.addRun(nr.text, { charPrIdRef: nr.charPrIdRef ?? "0" });
+      }
+    }
+
+    this.section.markDirty();
+  }
+
+  private _ensureRun(): Element {
+    const runs = findAllChildren(this.element, HP_NS, "run");
+    if (runs.length > 0) return runs[0]!;
+    return subElement(this.element, HP_NS, "run", { charPrIDRef: this.charPrIdRef ?? "0" });
+  }
+}
