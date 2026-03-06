@@ -4,6 +4,7 @@
   "description": "CLI tool for HWPX file operations",
   "type": "module",
   "bin": {
+    "hwpxcli": "./dist/cli.js",
     "hwpxtool": "./dist/cli.js"
   },
   "main": "./dist/index.js",

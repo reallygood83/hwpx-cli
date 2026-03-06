@@ -231,7 +231,7 @@ export function createProgram(): Command {
   const program = new Command();
 
   program
-    .name("hwpxtool")
+    .name("hwpxcli")
     .description("CLI tool for HWPX file operations")
     .version("0.1.0");
 

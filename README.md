@@ -12,10 +12,10 @@
 ## 0) 먼저 이름부터 정리 (헷갈림 방지)
 
 - 저장소 이름: **hwpx-cli**
-- 터미널 명령어: **`hwpxtool`**
+- 터미널 명령어: **`hwpxcli`**
 - 패키지 이름들: **`@masteroflearning/*`**
 
-즉, 깃허브 레포는 `hwpx-cli`, 실제 실행은 `hwpxtool`입니다.
+즉, 깃허브 레포는 `hwpx-cli`, 실제 실행은 `hwpxcli`입니다.
 
 ---
 
@@ -38,7 +38,7 @@
 
 1. **손 (`@masteroflearning/hwpxcore`)**  
    - 문서를 실제로 읽고/수정하는 핵심 라이브러리
-2. **리모컨 (`hwpxtool`)**  
+2. **리모컨 (`hwpxcli`)**  
    - 터미널에서 손을 쉽게 움직이게 하는 CLI
 3. **AI 연결선 (`@masteroflearning/hwpx-mcp`)**  
    - OpenClaw/Claude Code 같은 AI가 이 도구를 쓰게 연결
@@ -56,10 +56,10 @@ npx @masteroflearning/hwpx-cli --help
 ### B. 자주 쓰는 4개 명령
 
 ```bash
-hwpxtool read document.hwpx
-hwpxtool info document.hwpx
-hwpxtool hwpx-to-md document.hwpx -o document.md
-hwpxtool hwp-to-hwpx legacy.hwp -o legacy.hwpx
+hwpxcli read document.hwpx
+hwpxcli info document.hwpx
+hwpxcli hwpx-to-md document.hwpx -o document.md
+hwpxcli hwp-to-hwpx legacy.hwp -o legacy.hwpx
 ```
 
 ### C. 라이브러리로 쓰기
@@ -89,13 +89,13 @@ npx @masteroflearning/hwpx-mcp
 OpenClaw 설정 자동화:
 
 ```bash
-hwpxtool mcp-config --target openclaw --global
+hwpxcli mcp-config --target openclaw --global
 ```
 
 설정 미리보기(JSON):
 
 ```bash
-hwpxtool mcp-config --target openclaw --print
+hwpxcli mcp-config --target openclaw --print
 ```
 
 ---
@@ -105,7 +105,7 @@ hwpxtool mcp-config --target openclaw --print
 여러 HWPX 파일을 AI 검색(RAG)용 JSONL로 만드는 예시:
 
 ```bash
-hwpxtool batch index ./hwpx-folder \
+hwpxcli batch index ./hwpx-folder \
   --output ./artifacts/hwpx-index.jsonl \
   --chunk-by paragraph \
   --max-chars 1200
@@ -116,7 +116,7 @@ hwpxtool batch index ./hwpx-folder \
 `index-multi`로 여러 입력 경로를 한 번에 처리하고, 결과를 하나의 인덱스로 합칠 수 있습니다.
 
 ```bash
-hwpxtool batch index-multi ./workspace/docs /Users/moon/LearningMaster \
+hwpxcli batch index-multi ./workspace/docs /Users/moon/LearningMaster \
   --output ./artifacts/all-docs-index.jsonl \
   --state-dir ./artifacts/all-docs-states \
   --incremental \
@@ -146,7 +146,7 @@ hwpxtool batch index-multi ./workspace/docs /Users/moon/LearningMaster \
 |---|---|
 | `@masteroflearning/hwpxcore` | 문서를 읽고 고치는 핵심 엔진 |
 | `@masteroflearning/hwpx-tools` | 변환/추출/인덱싱 보조 도구 |
-| `@masteroflearning/hwpx-cli` | 터미널 명령어 모음 (`hwpxtool`) |
+| `@masteroflearning/hwpx-cli` | 터미널 명령어 모음 (`hwpxcli`) |
 | `@masteroflearning/hwpx-mcp` | AI 에이전트 연동 서버 |
 | `@masteroflearning/hwpxeditor` | React 기반 편집 UI 컴포넌트 |
 
@@ -204,7 +204,7 @@ node packages/hwpx-cli/dist/cli.js --help
 아래 3개를 바로 말할 수 있으면 이해 완료:
 
 1. 이 레포 이름은? → **hwpx-cli**  
-2. 터미널에서 치는 명령은? → **hwpxtool**  
+2. 터미널에서 치는 명령은? → **hwpxcli**  
 3. AI 연결 패키지는? → **@masteroflearning/hwpx-mcp**
 
 ---
