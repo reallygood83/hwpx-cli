@@ -111,6 +111,24 @@ hwpxtool batch index ./hwpx-folder \
   --max-chars 1200
 ```
 
+### 여러 폴더를 한 번에 인덱싱 (멀티 폴더 운영)
+
+`index-multi`로 여러 입력 경로를 한 번에 처리하고, 결과를 하나의 인덱스로 합칠 수 있습니다.
+
+```bash
+hwpxtool batch index-multi ./workspace/docs /Users/moon/LearningMaster \
+  --output ./artifacts/all-docs-index.jsonl \
+  --state-dir ./artifacts/all-docs-states \
+  --incremental \
+  --chunk-by paragraph \
+  --max-chars 1200 \
+  --format jsonl \
+  --json
+```
+
+- `--state-dir` 안에 입력 경로별 상태 파일이 저장됩니다.
+- 다음 실행부터 `--incremental`로 변경된 파일만 재인덱싱됩니다.
+
 자주 쓰는 옵션:
 - `--format jsonl|json` : 출력 형식
 - `--chunk-by paragraph|section|document` : 자르는 기준

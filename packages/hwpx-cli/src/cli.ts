@@ -16,7 +16,8 @@ import {
   batchIndexHwpx,
 } from "@masteroflearning/hwpx-tools";
 import { createHash } from "node:crypto";
-import { mkdir, readdir, stat, writeFile } from "node:fs/promises";
+import { appendFile, mkdir, mkdtemp, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { basename, dirname, extname, relative, resolve } from "node:path";
 import { handleMcpConfig, type McpConfigOptions } from "./commands/mcp-config.js";
 
@@ -56,6 +57,10 @@ export interface BatchIndexOptions {
   statePath?: string;
   schema?: boolean;
   json?: boolean;
+}
+
+export interface BatchIndexMultiOptions extends BatchIndexOptions {
+  stateDir?: string;
 }
 
 interface BatchIndexRecord {
@@ -601,6 +606,149 @@ export function createProgram(): Command {
       } catch (error) {
         console.error("Error indexing files:", error instanceof Error ? error.message : String(error));
         process.exit(1);
+      }
+    });
+
+  batch
+    .command("index-multi <inputs...>")
+    .description("Index multiple folders/files and merge into a single output")
+    .option("-o, --output <file>", "Output file path (default: ./hwpx-index.multi.jsonl)")
+    .option("--format <format>", "Output format: jsonl or json", "jsonl")
+    .option("--chunk-by <mode>", "Chunk strategy: paragraph, section, document", "paragraph")
+    .option("--max-chars <number>", "Maximum characters per chunk", (value) => parseInt(value, 10), 1200)
+    .option("--include-empty", "Include empty chunks")
+    .option("--fail-fast", "Stop at the first failed file")
+    .option("--incremental", "Re-index only changed files using state cache")
+    .option("--state-dir <dir>", "Directory to store per-input state files")
+    .option("--json", "Print summary as JSON to stdout")
+    .action(async (inputs: string[], options: BatchIndexMultiOptions) => {
+      const resolvedInputs = inputs.map((input) => resolve(input));
+      const format = options.format === "json" ? "json" : "jsonl";
+      const chunkBy =
+        options.chunkBy === "section" || options.chunkBy === "document"
+          ? options.chunkBy
+          : "paragraph";
+      const maxChars = Number.isFinite(options.maxChars) && (options.maxChars ?? 0) > 0
+        ? Math.floor(options.maxChars as number)
+        : 1200;
+      const outputPath = resolve(
+        options.output ?? `./hwpx-index.multi.${format === "json" ? "json" : "jsonl"}`
+      );
+      const stateDir = resolve(options.stateDir ?? `${outputPath}.states`);
+
+      const startedAt = new Date().toISOString();
+      const tempDir = await mkdtemp(resolve(tmpdir(), "hwpxtool-index-multi-"));
+      const mergedRecords: BatchIndexRecord[] = [];
+      const perInputSummaries: Array<Record<string, unknown>> = [];
+
+      let scannedFiles = 0;
+      let indexedFiles = 0;
+      let skippedFiles = 0;
+      let failedFiles = 0;
+      let chunkCount = 0;
+      const failures: BatchFailure[] = [];
+
+      try {
+        await mkdir(dirname(outputPath), { recursive: true });
+        await mkdir(stateDir, { recursive: true });
+        if (format === "jsonl") {
+          await writeFile(outputPath, "", "utf-8");
+        }
+
+        for (let i = 0; i < resolvedInputs.length; i += 1) {
+          const inputPath = resolvedInputs[i];
+          const safeName = basename(inputPath).replace(/[^a-zA-Z0-9._-]+/g, "_") || `input-${i + 1}`;
+          const partOutputPath = resolve(tempDir, `part-${i + 1}.${format === "json" ? "json" : "jsonl"}`);
+          const partStatePath = resolve(stateDir, `${safeName}.state.json`);
+
+          const result = await batchIndexHwpx({
+            inputPath,
+            outputPath: partOutputPath,
+            format,
+            chunkBy,
+            maxChars,
+            includeEmpty: !!options.includeEmpty,
+            failFast: !!options.failFast,
+            incremental: !!options.incremental,
+            statePath: partStatePath,
+          });
+
+          scannedFiles += result.scannedFiles;
+          indexedFiles += result.indexedFiles;
+          skippedFiles += result.skippedFiles;
+          failedFiles += result.failedFiles;
+          chunkCount += result.chunkCount;
+          failures.push(...result.failures);
+
+          perInputSummaries.push({
+            input: result.input,
+            scannedFiles: result.scannedFiles,
+            indexedFiles: result.indexedFiles,
+            skippedFiles: result.skippedFiles,
+            failedFiles: result.failedFiles,
+            chunkCount: result.chunkCount,
+            statePath: result.statePath,
+          });
+
+          if (format === "jsonl") {
+            const content = await readFile(partOutputPath, "utf-8");
+            if (content.trim().length > 0) {
+              await appendFile(outputPath, content.endsWith("\n") ? content : `${content}\n`, "utf-8");
+            }
+          } else {
+            const records = JSON.parse(await readFile(partOutputPath, "utf-8")) as BatchIndexRecord[];
+            mergedRecords.push(...records);
+          }
+        }
+
+        if (format === "json") {
+          await writeFile(outputPath, JSON.stringify(mergedRecords, null, 2), "utf-8");
+        }
+
+        const summary = {
+          ok: failedFiles === 0,
+          command: "batch index-multi",
+          startedAt,
+          finishedAt: new Date().toISOString(),
+          inputs: resolvedInputs,
+          output: outputPath,
+          stateDir,
+          format,
+          chunkBy,
+          maxChars,
+          incremental: !!options.incremental,
+          scannedFiles,
+          indexedFiles,
+          skippedFiles,
+          failedFiles,
+          chunkCount,
+          failures,
+          perInput: perInputSummaries,
+        };
+
+        if (options.json) {
+          console.log(JSON.stringify(summary, null, 2));
+        } else {
+          console.error(`Indexed files: ${indexedFiles}/${scannedFiles}`);
+          if (options.incremental) {
+            console.error(`Skipped files (unchanged): ${skippedFiles}`);
+          }
+          console.error(`Chunks written: ${chunkCount}`);
+          console.error(`Output: ${outputPath}`);
+          console.error(`State dir: ${stateDir}`);
+        }
+
+        if (failedFiles > 0 && indexedFiles > 0) {
+          process.exit(4);
+        }
+        if (failedFiles > 0 && indexedFiles === 0) {
+          process.exit(2);
+        }
+      } catch (error) {
+        console.error("Error indexing multiple inputs:", error instanceof Error ? error.message : String(error));
+        process.exit(1);
+      } finally {
+        await rm(tempDir, { recursive: true, force: true });
       }
     });
 
