@@ -1,10 +1,10 @@
-# hwpx-ts LLM Guide
+# hwpx-cli LLM Guide
 
 This file is a concise, LLM-friendly reference for using this repository.
 
 ## Repository Purpose
 
-`hwpx-ts` is a TypeScript monorepo for HWPX document workflows:
+`hwpx-cli` is a TypeScript monorepo for HWPX document workflows:
 
 - Parse and edit HWPX (`@masteroflearning/hwpxcore`)
 - Render/edit in React (`@masteroflearning/hwpxeditor`)

@@ -1,26 +1,29 @@
 <!-- HWPX 문서를 TypeScript/CLI/MCP로 자동화하려면 @masteroflearning/hwpxcore 사용 -->
 
-# hwpx-ts
+# hwpx-cli
 
-한글(HWPX) 문서를 **읽기/변환/편집/인덱싱**하기 위한 TypeScript 기반 도구 모음입니다.  
-핵심 목표는 "문서 작업을 터미널과 AI 워크플로우로 자동화"하는 것입니다.
+한글(HWPX) 문서를 **읽기/변환/편집/인덱싱**하기 위한 TypeScript 모노레포입니다.  
+CLI(`hwpxtool`), 라이브러리(`@masteroflearning/hwpxcore`), MCP 서버(`@masteroflearning/hwpx-mcp`)를 함께 제공합니다.
 
-## 공지
+## 핵심 포인트
 
-- 이 프로젝트는 기존 `@ubermensch1218/*` 기반을 참조하여 `@masteroflearning/*` 스코프로 확장/업데이트하고 있습니다.
-- 신규 사용은 `@masteroflearning/*` 기준을 권장합니다.
+- 저장소 이름: **hwpx-cli**
+- CLI 실행 명령: **`hwpxtool`**
+- 패키지 스코프: **`@masteroflearning/*`**
 
-## 무엇을 할 수 있나?
+## 기능
 
 - HWPX 텍스트/메타데이터 읽기
-- HWPX -> Markdown/TXT 변환
-- HWP(5.x) -> HWPX 변환(best-effort)
-- MCP 서버로 AI 에이전트와 연동
-- 여러 HWPX를 한 번에 인덱싱(JSONL/JSON)하여 RAG 파이프라인 입력 생성
+- HWPX → Markdown/TXT 변환
+- HWP(5.x) → HWPX 변환 (best-effort)
+- MCP 서버 연동 (OpenClaw / Claude Code 등)
+- 다수 HWPX 문서 배치 인덱싱(JSONL/JSON)
+
+---
 
 ## 빠른 시작
 
-### 1) 라이브러리로 사용
+### 1) 라이브러리 사용
 
 ```bash
 npm install @masteroflearning/hwpxcore
@@ -36,7 +39,7 @@ console.log(doc.text);
 console.log(doc.sections.length);
 ```
 
-### 2) CLI로 사용
+### 2) CLI 사용
 
 ```bash
 npx @masteroflearning/hwpx-cli --help
@@ -51,40 +54,27 @@ hwpxtool hwpx-to-md document.hwpx -o document.md
 hwpxtool hwp-to-hwpx legacy.hwp -o legacy.hwpx
 ```
 
-### 3) AI(MCP)로 사용
+### 3) MCP 서버 사용
 
 ```bash
 npx @masteroflearning/hwpx-mcp
 ```
 
-Claude Desktop / Claude Code 설정 예시:
-
-```json
-{
-  "mcpServers": {
-    "hwpx": {
-      "command": "npx",
-      "args": ["@masteroflearning/hwpx-mcp"]
-    }
-  }
-}
-```
-
-OpenClaw 설정 예시:
+OpenClaw 자동 설정:
 
 ```bash
 hwpxtool mcp-config --target openclaw --global
 ```
 
-설정 파일을 직접 쓰지 않고 JSON만 출력하려면:
+설정 미리보기(JSON 출력):
 
 ```bash
 hwpxtool mcp-config --target openclaw --print
 ```
 
-## 실무 시나리오: 폴더 전체 인덱싱(RAG 입력 생성)
+---
 
-여러 `.hwpx` 파일을 모아둔 폴더를 바로 인덱싱할 수 있습니다.
+## 실무 예시: 폴더 전체 인덱싱(RAG 입력 생성)
 
 ```bash
 hwpxtool batch index ./hwpx-folder \
@@ -93,67 +83,31 @@ hwpxtool batch index ./hwpx-folder \
   --max-chars 1200
 ```
 
-### 자주 쓰는 옵션
+자주 쓰는 옵션:
 
 - `--format jsonl|json`: 출력 포맷
 - `--chunk-by paragraph|section|document`: 청크 기준
 - `--max-chars <n>`: 청크 최대 길이
-- `--incremental`: 변경된 파일만 재인덱싱
-- `--state-path <file>`: incremental 상태파일 경로
-- `--json`: 실행 결과 요약을 JSON으로 stdout 출력
-- `--schema`: 출력 레코드 스키마를 출력하고 종료
+- `--incremental`: 변경 파일만 재인덱싱
+- `--state-path <file>`: incremental 상태파일
+- `--json`: 실행 요약 JSON 출력
+- `--schema`: 출력 레코드 스키마 출력
 
-예시:
+---
 
-```bash
-hwpxtool batch index ./hwpx-folder \
-  --incremental \
-  --state-path ./artifacts/hwpx-index.state.json \
-  --json
-```
-
-## 인덱스 레코드(JSONL) 예시
-
-```json
-{
-  "id": "b7f...",
-  "sourcePath": "/abs/path/report.hwpx",
-  "relativePath": "report.hwpx",
-  "sourceFile": "report.hwpx",
-  "chunkBy": "paragraph",
-  "chunkIndex": 12,
-  "sectionIndex": 0,
-  "paragraphIndex": 45,
-  "text": "...",
-  "metadata": {
-    "title": null,
-    "author": null,
-    "date": null,
-    "sections": 3,
-    "paragraphs": 220,
-    "indexedAt": "2026-03-02T...Z"
-  }
-}
-```
-
-## AI에서 어떻게 활용하나?
-
-1. `batch index`로 JSONL 생성
-2. `text` 필드를 임베딩으로 변환
-3. `id/relativePath/sectionIndex/paragraphIndex`를 메타데이터로 벡터DB 저장
-4. 검색 결과를 원문 문서 위치로 역추적
-
-## 패키지
+## 패키지 구성
 
 | 패키지 | 설명 |
 |---|---|
 | `@masteroflearning/hwpxcore` | HWPX 읽기/편집 핵심 라이브러리 |
 | `@masteroflearning/hwpx-tools` | 변환/추출/인덱싱 유틸리티 |
-| `@masteroflearning/hwpx-cli` | 터미널용 CLI |
+| `@masteroflearning/hwpx-cli` | 터미널용 CLI (`hwpxtool`) |
 | `@masteroflearning/hwpx-mcp` | MCP 서버 (AI 에이전트 연동) |
 | `@masteroflearning/hwpxeditor` | React 기반 에디터 컴포넌트 |
 
-## 개발자용 검증 명령
+---
+
+## 개발
 
 ```bash
 pnpm install
@@ -172,17 +126,20 @@ pnpm --filter @masteroflearning/hwpx-mcp typecheck
 pnpm --filter @masteroflearning/hwpx-mcp build
 ```
 
+---
+
 ## 트러블슈팅
 
-- GitHub Pages 배포 실패(404) 시: 저장소 `Settings -> Pages`에서 Pages를 먼저 활성화하세요.
-- `Cannot find module '@masteroflearning/...` 오류: 루트에서 `pnpm install` 후 해당 의존 패키지부터 빌드하세요.
-- HWP 변환 품질 이슈: `hwp-to-hwpx`는 best-effort입니다. 원본 레이아웃 100% 보장을 목표로 하지 않습니다.
+- `Cannot find module '@masteroflearning/...'`  
+  → 루트에서 `pnpm install` 후 의존 패키지부터 순서대로 빌드하세요.
+- HWP 변환 품질 이슈  
+  → `hwp-to-hwpx`는 best-effort이며 원본 레이아웃 100% 보장을 목표로 하지 않습니다.
 
-## npm 없이 배포/사용하기
+---
 
-npm publish가 지연되더라도 아래 방식으로 바로 배포할 수 있습니다.
+## npm 없이 사용
 
-### A. GitHub 소스 설치 (즉시 사용 가능)
+### A) GitHub 소스에서 바로 실행
 
 ```bash
 git clone https://github.com/reallygood83/hwpx-cli.git
@@ -194,13 +151,7 @@ pnpm --filter @masteroflearning/hwpx-cli build
 node packages/hwpx-cli/dist/cli.js --help
 ```
 
-### B. GitHub Release 아티팩트
-
-운영체제별 아티팩트를 릴리스에 올려 배포할 수 있습니다.
-
-### C. Homebrew Tap
-
-release 아티팩트가 준비되면 Homebrew 탭으로 1줄 설치를 제공합니다.
+### B) Homebrew (릴리스 준비 후)
 
 ```bash
 brew tap masteroflearning/hwpxtool
@@ -209,6 +160,8 @@ brew install hwpxtool
 
 자세한 배포 대안은 `docs/distribution-without-npm.md`를 참고하세요.
 
+---
+
 ## 라이선스
 
-Apache License 2.0. 자세한 내용은 `LICENSE`를 참고하세요.
+Apache License 2.0 (`LICENSE` 참고)
